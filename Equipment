@@ -1305,25 +1305,36 @@ function showInventorySheet(){
 function renderAll(){renderHome();renderLockboxes();renderSigns();renderAgents();updateHeader();}
 
 window.addEventListener('load',()=>{
-  // Show login screen immediately — don't wait for Firebase
-  const user=gu();
-  if(!user){
-    showSetup(); // show right away with default agents
-  } else {
-    updateHeader();updateAdminUI();renderAll();
-  }
-  // Then try to connect Firebase in the background
   try {
-    initFirebase();
-  } catch(e) {
-    console.warn('Firebase connection failed — running in offline mode');
-    hideSyncBanner();
+    const user=gu();
+    if(!user){
+      // Force the setup screen open directly — don't rely on showSetup
+      document.getElementById('setupScreen').classList.add('open');
+      // Populate dropdown with defaults
+      const sel=document.getElementById('setupAgent');
+      sel.innerHTML='<option value="">Select your name...</option>';
+      const adminOpt=document.createElement('option');
+      adminOpt.value='admin';adminOpt.textContent='Admin';
+      sel.appendChild(adminOpt);
+      (_agents.length?_agents:DA).forEach(a=>{
+        const o=document.createElement('option');
+        o.value=a.id;o.textContent=a.name;
+        sel.appendChild(o);
+      });
+    } else {
+      updateHeader();updateAdminUI();renderAll();
+    }
+  } catch(e){
+    // Last resort — force setup screen open no matter what
+    console.error('Load error:',e);
+    document.getElementById('setupScreen').classList.add('open');
   }
+
+  // Connect Firebase in background
+  try { initFirebase(); } catch(e){ console.warn('Firebase offline',e); }
 });
 
 document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');}));
 </script>
-</body>
-</html>
 </body>
 </html>

@@ -397,6 +397,50 @@
   <!-- bottom padding handled by .page rule -->
 </div>
 
+<!-- ADMIN PANEL (only visible to admins) -->
+<div class="page" id="pageAdmin">
+  <div class="sh" style="padding-top:20px">
+    <div class="st">Admin Panel</div>
+  </div>
+
+  <div class="sg">
+    <div class="sg-lbl">Agents</div>
+    <div class="sr" onclick="showAddAgentSheet()">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4"/><path d="M2 20c0-4 3.6-7 8-7"/><path d="M19 11v6M22 14h-6"/></svg></div><div class="s-lbl">Add Agent</div></div>
+      <div class="chev">›</div>
+    </div>
+  </div>
+  <div id="adminAgentList"></div>
+
+  <div class="sg">
+    <div class="sg-lbl">Lockboxes</div>
+    <div class="sr" onclick="showAddLockboxSheet()">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><path d="M12 2C10 2 9 3.2 9 4.5C9 5.8 10.3 7 12 7C13.7 7 15 5.8 15 4.5C15 3.2 14 2 12 2Z"/><rect x="6" y="7" width="12" height="15" rx="2.5"/><circle cx="12" cy="13.5" r="1.5"/></svg></div><div class="s-lbl">Add Lockbox</div></div>
+      <div class="chev">›</div>
+    </div>
+  </div>
+  <div id="adminLockboxList"></div>
+
+  <div class="sg">
+    <div class="sg-lbl">History</div>
+    <div class="sr" onclick="showHistorySheet('all')">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></div><div class="s-lbl">View All Activity</div></div>
+      <div class="chev">›</div>
+    </div>
+    <div class="sr" onclick="clearHistory()">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></div><div class="s-lbl">Clear History</div></div>
+      <div class="chev">›</div>
+    </div>
+  </div>
+
+  <div class="sg">
+    <div class="sg-lbl" style="color:var(--red)">Danger Zone</div>
+    <div class="sr" onclick="clearAllData()">
+      <div class="sr-l"><div class="s-ico" style="background:rgba(255,69,58,.15)"><svg viewBox="0 0 24 24" style="stroke:var(--red)"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></div><div class="s-lbl" style="color:var(--red)">Clear All Data</div></div>
+    </div>
+  </div>
+</div>
+
 <!-- NAV -->
 <nav class="nav">
   <button class="ni active" onclick="navTo('pageHome',this)">
@@ -414,6 +458,10 @@
   <button class="ni" onclick="navTo('pageAgents',this)">
     <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
     <span>Team</span>
+  </button>
+  <button class="ni" id="adminNavBtn" style="display:none" onclick="navTo('pageAdmin',this)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    <span>Admin</span>
   </button>
   <button class="ni" onclick="navTo('pageSettings',this)">
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -580,8 +628,8 @@ const db  = firebase.database();
 // ═══════════════════════════════════════
 // DEFAULT DATA
 // ═══════════════════════════════════════
-const DA=[{id:'a1',name:'Skylar M.',phone:'(253) 722-3926'},{id:'a2',name:'Jamie Rodriguez',phone:'(253) 555-0102'},{id:'a3',name:'Dana Kim',phone:'(253) 555-0103'},{id:'a4',name:'Marcus Reed',phone:'(253) 555-0104'}];
-const DL=['LB-001','LB-002','LB-003','LB-004','LB-005','LB-006','LB-007','LB-008'].map((n,i)=>({id:'lb'+(i+1),number:n,agent:null,address:null,dateCheckedOut:null,forSaleSign:false,status:'available'}));
+const DA=[{id:'a0',name:'Skylar Garbett',phone:'(253) 722-3926'}];
+const DL=[];
 
 // ═══════════════════════════════════════
 // IN-MEMORY CACHE (synced from Firebase)
@@ -673,7 +721,8 @@ function navTo(pageId,btn){
   document.getElementById(pageId).classList.add('active');
   document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
   if(btn)btn.classList.add('active');
-  else{const m={pageHome:0,pageLockboxes:1,pageSigns:2,pageAgents:3,pageSettings:4};const i=m[pageId];if(i!==undefined)document.querySelectorAll('.ni')[i].classList.add('active');}
+  else{const m={pageHome:0,pageLockboxes:1,pageSigns:2,pageAgents:3,pageAdmin:4,pageSettings:5};const i=m[pageId];if(i!==undefined)document.querySelectorAll('.ni')[i].classList.add('active');}
+  if(pageId==='pageAdmin')renderAdminPanel();
   renderAll();
 }
 
@@ -1012,6 +1061,37 @@ function requireAdmin(callback){
   openSheet('adminPinSheet');
 }
 
+// ═══════════════════════════════════════
+// ADMIN SYSTEM — hardcoded admins
+// ═══════════════════════════════════════
+const HARDCODED_ADMINS = ['Skylar Garbett']; // Add names here to grant permanent admin access
+const ADMIN_PIN = '2025'; // fallback PIN for future admins not yet in the list
+let adminUnlocked = false;
+let adminPinCallback = null;
+
+function isAdmin(name){
+  return HARDCODED_ADMINS.includes(name) || getAdmins().includes(name);
+}
+function getAdmins(){return JSON.parse(localStorage.getItem('prec_admins')||'[]');}
+function saveAdmins(d){localStorage.setItem('prec_admins',JSON.stringify(d));}
+
+function updateAdminUI(){
+  const user=gu();
+  const admin=user&&isAdmin(user.name);
+  adminUnlocked=admin;
+  // Show/hide admin nav tab
+  const adminTab=document.getElementById('adminNavBtn');
+  if(adminTab)adminTab.style.display=admin?'flex':'none';
+}
+
+function requireAdmin(callback){
+  const user=gu();
+  if(user&&isAdmin(user.name)){callback();return;}
+  adminPinCallback=callback;
+  document.getElementById('adminPinInput').value='';
+  openSheet('adminPinSheet');
+}
+
 function submitAdminPin(){
   const pin=document.getElementById('adminPinInput').value;
   if(pin===ADMIN_PIN){
@@ -1025,56 +1105,67 @@ function submitAdminPin(){
   }
 }
 
-function showAdminMgmt(){
-  const admins=getAdmins();
+// ═══════════════════════════════════════
+// ADMIN PANEL RENDER
+// ═══════════════════════════════════════
+function renderAdminPanel(){
+  renderAdminAgents();
+  renderAdminLockboxes();
+}
+
+function renderAdminAgents(){
   const agents=ga();
-  const list=document.getElementById('adminList');
-  if(!admins.length){
-    list.innerHTML='<div class="empty" style="padding:20px"><div class="empty-text">No admins set — use PIN 2025 to access</div></div>';
-  } else {
-    const card=document.createElement('div');card.className='card';card.style.margin='0 16px 10px';
-    card.innerHTML=admins.map(name=>`
-      <div class="cr">
-        <div class="avatar" style="width:38px;height:38px;font-size:12px;flex-shrink:0;border-radius:50%;background:var(--bg4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--silver)">${ini(name)}</div>
-        <div class="ci"><div class="ct">${name}</div></div>
-        <button onclick="removeAdmin('${name}')" style="background:rgba(255,69,58,.15);border:1px solid rgba(255,69,58,.2);color:var(--red);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">Remove</button>
+  const el=document.getElementById('adminAgentList');
+  if(!el)return;
+  if(!agents.length){el.innerHTML='<div class="empty" style="padding:16px 20px"><div class="empty-text">No agents added yet</div></div>';return;}
+  const card=document.createElement('div');card.className='card';card.style.margin='0 16px 10px';
+  card.innerHTML=agents.map(a=>`
+    <div class="cr">
+      <div class="avatar" style="width:38px;height:38px;font-size:12px;flex-shrink:0;border-radius:50%;background:var(--bg4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--silver)">${ini(a.name)}</div>
+      <div class="ci"><div class="ct">${a.name}</div><div class="cs">${a.phone||'No phone'}</div></div>
+      ${HARDCODED_ADMINS.includes(a.name)?'<span class="pill p-avail" style="font-size:9px">Admin</span>':''}
+      <button onclick="deleteAgent('${a.id}')" style="margin-left:8px;background:rgba(255,69,58,.15);border:1px solid rgba(255,69,58,.2);color:var(--red);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">Delete</button>
+    </div>
+  `).join('');
+  el.innerHTML='';el.appendChild(card);
+}
+
+function renderAdminLockboxes(){
+  const boxes=gl();
+  const el=document.getElementById('adminLockboxList');
+  if(!el)return;
+  if(!boxes.length){el.innerHTML='<div class="empty" style="padding:16px 20px"><div class="empty-text">No lockboxes added yet</div></div>';return;}
+  const card=document.createElement('div');card.className='card';card.style.margin='0 16px 10px';
+  card.innerHTML=boxes.map(b=>`
+    <div class="cr">
+      <div class="ci">
+        <div class="ct">${b.number}</div>
+        <div class="cs">${b.status==='checkedout'?`Out · ${b.agent||''}`:b.status==='available'?'Available':'—'}</div>
       </div>
-    `).join('');
-    list.innerHTML='';list.appendChild(card);
-  }
-  openSheet('adminMgmtSheet');
+      <span class="pill ${b.status==='available'?'p-avail':'p-out'}" style="margin-right:8px">${b.status==='available'?'Available':'Out'}</span>
+      <button onclick="deleteLockbox('${b.id}')" style="background:rgba(255,69,58,.15);border:1px solid rgba(255,69,58,.2);color:var(--red);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">Delete</button>
+    </div>
+  `).join('');
+  el.innerHTML='';el.appendChild(card);
 }
 
-function showAddAdminSheet(){
-  const agents=ga();
-  const admins=getAdmins();
-  const available=agents.filter(a=>!admins.includes(a.name));
-  const sel=document.getElementById('addAdminSelect');
-  if(!available.length){showToast('All agents are already admins');return;}
-  sel.innerHTML=available.map(a=>`<option value="${a.name}">${a.name}</option>`).join('');
-  openSheet('addAdminSheet');
+function deleteAgent(id){
+  if(!confirm('Delete this agent? This cannot be undone.'))return;
+  const agents=ga().filter(a=>a.id!==id);
+  sa(agents);showToast('Agent deleted');renderAdminPanel();
 }
 
-function submitAddAdmin(){
-  const name=document.getElementById('addAdminSelect').value;
-  if(!name)return;
-  const admins=getAdmins();
-  if(!admins.includes(name))admins.push(name);
-  saveAdmins(admins);
-  closeSheet('addAdminSheet');
-  showToast(`✅ ${name} is now an admin`);
-  showAdminMgmt();
-  updateAdminUI();
+function deleteLockbox(id){
+  if(!confirm('Delete this lockbox? This cannot be undone.'))return;
+  const boxes=gl().filter(b=>b.id!==id);
+  sl(boxes);showToast('Lockbox deleted');renderAdminPanel();
 }
 
-function removeAdmin(name){
-  const user=gu();
-  if(user&&user.name===name){showToast("You can't remove yourself");return;}
-  const admins=getAdmins().filter(a=>a!==name);
-  saveAdmins(admins);
-  showToast(`${name} removed as admin`);
-  showAdminMgmt();
-  updateAdminUI();
+function clearAllData(){
+  if(!confirm('⚠️ This will delete ALL lockboxes, signs, agents, and history. Are you sure?'))return;
+  if(!confirm('Last chance — this cannot be undone. Confirm?'))return;
+  sa(DA);sl([]);ss([]);sh2([]);
+  showToast('All data cleared');renderAll();renderAdminPanel();
 }
 
 // SUCCESS SCREEN

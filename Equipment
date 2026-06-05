@@ -567,7 +567,7 @@
     <div class="s-hdr"><div class="s-title">Add Agent</div><button class="s-close" onclick="closeSheet('addAgentSheet')">✕</button></div>
     <div class="s-body">
       <div class="field"><label>Full Name</label><input type="text" id="aaName" placeholder="Jane Smith"></div>
-      <div class="field"><label>Phone Number</label><input type="tel" id="aaPhone" placeholder="(253) 000-0000"></div>
+      <div class="field"><label>Phone Number</label><input type="tel" id="aaPhone" placeholder="(253) 000-0000" oninput="formatPhoneInput(this)"></div>
       <div class="field"><label>Temporary PIN</label><input type="password" id="aaPin" placeholder="4-digit PIN" maxlength="4" inputmode="numeric"><div style="font-size:11px;color:var(--silver2);margin-top:5px">Agent will be prompted to create their own PIN on first sign in</div></div>
       <button class="btn btn-p" onclick="submitAddAgent()">Add Agent</button>
     </div>
@@ -590,11 +590,16 @@
   <div class="sheet"><div class="s-handle"></div>
     <div class="s-hdr"><div class="s-title">My Account</div><button class="s-close" onclick="closeSheet('userSheet')">✕</button></div>
     <div class="s-body">
-      <div style="text-align:center;padding:10px 0 24px">
+      <div style="text-align:center;padding:10px 0 20px">
         <div class="avatar lg" style="margin:0 auto 12px" id="userSheetAvatar"></div>
         <div style="font-size:19px;font-weight:600" id="userSheetName"></div>
         <div style="font-size:13px;color:var(--silver2);margin-top:4px" id="userSheetPhone"></div>
       </div>
+      <div class="field">
+        <label>Phone Number</label>
+        <input type="tel" id="userPhoneInput" placeholder="(253) 000-0000" oninput="formatPhoneInput(this)">
+      </div>
+      <button class="btn btn-p" onclick="saveUserPhone()" style="margin-bottom:8px">Save Phone Number</button>
       <button class="btn btn-o" onclick="switchUser()">Switch User</button>
     </div>
   </div>
@@ -922,6 +927,32 @@ function submitCreatePin(){
   updateHeader();updateAdminUI();renderAll();
 }
 
+function editAgentPhone(id){
+  const agent=ga().find(a=>a.id===id);if(!agent)return;
+  const existing=document.getElementById('confirmSheet');if(existing)existing.remove();
+  const el=document.createElement('div');el.id='confirmSheet';el.className='ov open';
+  el.innerHTML=`<div class="sheet"><div class="s-handle"></div>
+    <div style="padding:24px 24px 8px">
+      <div style="font-size:17px;font-weight:600;margin-bottom:4px">Edit Phone — ${agent.name}</div>
+      <div class="field" style="margin-top:16px"><label>Phone Number</label>
+        <input type="tel" id="editPhoneInput" value="${agent.phone||''}" placeholder="(253) 000-0000" oninput="formatPhoneInput(this)">
+      </div>
+    </div>
+    <div style="padding:0 20px 28px;display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-p" id="confirmYes">Save</button>
+      <button class="btn btn-o" id="confirmNo">Cancel</button>
+    </div></div>`;
+  document.body.appendChild(el);
+  document.getElementById('confirmYes').onclick=()=>{
+    const phone=document.getElementById('editPhoneInput').value.trim();
+    const agents=ga();
+    const idx=agents.findIndex(a=>a.id===id);if(idx===-1)return;
+    agents[idx].phone=phone;sa(agents);
+    el.remove();showToast('Phone updated');renderAdminPanel();
+  };
+  document.getElementById('confirmNo').onclick=()=>el.remove();
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+}
 function resetAgentPin(id){
   const existing=document.getElementById('confirmSheet');if(existing)existing.remove();
   const el=document.createElement('div');el.id='confirmSheet';el.className='ov open';
@@ -963,12 +994,36 @@ function updateHeader(){
   const sn=document.getElementById('settingsUserName');
   if(user){av.textContent=ini(user.name);const p=user.name.split(' ');gn.innerHTML=p[0]+' <span>'+(p[1]||'')+'</span>';if(sn)sn.textContent=user.name;}
 }
+function formatPhoneInput(input){
+  let v=input.value.replace(/\D/g,'').slice(0,10);
+  if(v.length>=7) v=`(${v.slice(0,3)}) ${v.slice(3,6)}-${v.slice(6)}`;
+  else if(v.length>=4) v=`(${v.slice(0,3)}) ${v.slice(3)}`;
+  else if(v.length) v=`(${v}`;
+  input.value=v;
+}
+
 function showUserSheet(){
   const user=gu();if(!user)return;
   document.getElementById('userSheetAvatar').textContent=ini(user.name);
   document.getElementById('userSheetName').textContent=user.name;
-  document.getElementById('userSheetPhone').textContent=user.phone||'';
+  document.getElementById('userSheetPhone').textContent=user.phone||'No phone on file';
+  document.getElementById('userPhoneInput').value=user.phone||'';
   openSheet('userSheet');
+}
+
+function saveUserPhone(){
+  const user=gu();if(!user)return;
+  const phone=document.getElementById('userPhoneInput').value.trim();
+  // Update in agents array
+  const agents=ga();
+  const idx=agents.findIndex(a=>a.id===user.id);
+  if(idx!==-1){agents[idx].phone=phone;sa(agents);}
+  // Update current session
+  const updated={...user,phone};
+  su(updated);
+  document.getElementById('userSheetPhone').textContent=phone||'No phone on file';
+  updateHeader();
+  showToast('Phone number saved');
 }
 
 // ICONS
@@ -1450,6 +1505,7 @@ function renderAdminAgents(){
       <div class="avatar" style="width:38px;height:38px;font-size:12px;flex-shrink:0;border-radius:50%;background:var(--bg4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--silver)">${ini(a.name)}</div>
       <div class="ci"><div class="ct">${a.name}</div><div class="cs">${a.phone||'No phone'}</div></div>
       ${HARDCODED_ADMINS.includes(a.name)?'<span class="pill p-avail" style="font-size:9px">Admin</span>':''}
+      <button onclick="editAgentPhone('${a.id}')" style="margin-left:4px;background:var(--bg4);border:1px solid var(--border);color:var(--silver2);border-radius:8px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer">Phone</button>
       <button onclick="resetAgentPin('${a.id}')" style="margin-left:4px;background:var(--bg4);border:1px solid var(--border);color:var(--silver2);border-radius:8px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer">Reset PIN</button>
       <button onclick="deleteAgent('${a.id}')" style="margin-left:4px;background:rgba(255,69,58,.15);border:1px solid rgba(255,69,58,.2);color:var(--red);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">Delete</button>
     </div>

@@ -254,23 +254,24 @@
     </div>
     <div class="ac" onclick="showCheckoutSignsSheet()">
       <div class="ai">
-        <!-- For sale sign: rectangle with text lines + two legs -->
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="18" y2="6.5"/><line x1="6" y1="9.5" x2="15" y2="9.5"/><line x1="6" y1="12" x2="11" y2="12"/><line x1="9" y1="15" x2="9" y2="22"/><line x1="15" y1="15" x2="15" y2="22"/></svg>
       </div>
-      <div class="al">Check Out Signs</div>
-      <div class="as">Open house signs</div>
+      <div class="al">Check Out Open House Signs</div>
+      <div class="as">Log signs taken</div>
     </div>
     <div class="ac" onclick="navTo('pageSigns')">
       <div class="ai">
-        <!-- Sign with return arrow + two legs -->
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="14" y2="6.5"/><line x1="6" y1="9.5" x2="12" y2="9.5"/><path d="M16 6l2.5 2.5-2.5 2.5"/><line x1="9" y1="15" x2="9" y2="22"/><line x1="15" y1="15" x2="15" y2="22"/></svg>
       </div>
-      <div class="al">Return Signs</div>
+      <div class="al">Return Open House Signs</div>
       <div class="as">Mark signs returned</div>
     </div>
   </div>
   <div class="sh"><div class="st">My Active Checkouts</div></div>
   <div id="myCheckoutsList"></div>
+
+  <div class="sh"><div class="st">Inventory At a Glance</div><div class="sa" onclick="showInventorySheet()">Details ›</div></div>
+  <div id="homeInventory"></div>
 </div>
 
 <!-- LOCKBOXES -->
@@ -347,10 +348,16 @@
       <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="18" y2="6.5"/><line x1="6" y1="9.5" x2="15" y2="9.5"/><line x1="9" y1="15" x2="9" y2="19"/><line x1="15" y1="15" x2="15" y2="19"/></svg></div><div class="s-lbl">Sign History</div></div>
       <div class="chev">›</div>
     </div>
-    <div class="sr" onclick="clearHistory()">
+    <div class="sr" id="clearHistoryRow" onclick="clearHistory()" style="display:none">
       <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></div><div class="s-lbl" style="color:var(--red)">Clear All History</div></div>
     </div>
+    <div class="sr" onclick="showAdminPinSheet()">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="s-lbl" id="adminRowLabel">Admin Access</div></div>
+      <div class="chev">›</div>
+    </div>
   </div>
+  <!-- extra bottom padding so last row clears nav bar -->
+  <div style="height:32px"></div>
 </div>
 
 <!-- NAV -->
@@ -409,7 +416,7 @@
 <!-- Checkout Signs -->
 <div class="ov" id="checkoutSignsSheet">
   <div class="sheet"><div class="s-handle"></div>
-    <div class="s-hdr"><div class="s-title">Check Out Signs</div><button class="s-close" onclick="closeSheet('checkoutSignsSheet')">✕</button></div>
+    <div class="s-hdr"><div class="s-title">Check Out Open House Signs</div><button class="s-close" onclick="closeSheet('checkoutSignsSheet')">✕</button></div>
     <div class="s-body">
       <div class="field"><label>Agent</label><select id="csAgent"></select></div>
       <div class="field"><label>Number of Signs</label><input type="number" id="csQuantity" placeholder="0" min="1"></div>
@@ -485,34 +492,140 @@
   </div>
 </div>
 
-<!-- Inventory Sheet -->
-<div class="ov" id="inventorySheet">
+<!-- Admin PIN Sheet -->
+<div class="ov" id="adminPinSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr"><div class="s-title" id="adminPinTitle">Admin Access</div><button class="s-close" onclick="closeSheet('adminPinSheet')">✕</button></div>
+    <div class="s-body">
+      <p style="font-size:14px;color:var(--text2);margin-bottom:20px">Enter the admin PIN to continue.</p>
+      <div class="field"><label>PIN</label><input type="password" id="adminPinInput" placeholder="••••" maxlength="6" inputmode="numeric"></div>
+      <button class="btn btn-p" onclick="submitAdminPin()">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<!-- Checkout Success Screen -->
+<div class="ov" id="successSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div style="text-align:center;padding:40px 24px 32px">
+      <div style="font-size:56px;margin-bottom:16px">✅</div>
+      <div style="font-size:22px;font-weight:600;margin-bottom:8px" id="successTitle">Checked Out</div>
+      <div style="font-size:15px;color:var(--text2);line-height:1.5" id="successDetail"></div>
+    </div>
+    <div style="padding:0 20px 32px"><button class="btn btn-p" onclick="closeSheet('successSheet')">Done</button></div>
+  </div>
+</div>
   <div class="sheet"><div class="s-handle"></div>
     <div class="s-hdr"><div class="s-title">Inventory Summary</div><button class="s-close" onclick="closeSheet('inventorySheet')">✕</button></div>
     <div style="padding:12px 16px 20px"><div class="card" style="margin:0" id="inventoryDetail"></div></div>
   </div>
 </div>
 
-<script>
-// DATA
+<script type="module">
+// ═══════════════════════════════════════
+// FIREBASE CONFIG — paste your values here
+// ═══════════════════════════════════════
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+import { getDatabase, ref, set, get, push, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyBAZyZgqhxJf49-tPSxeOBTTyP1O8kXpls",
+  authDomain:        "precheckout-316e4.firebaseapp.com",
+  databaseURL:       "https://precheckout-316e4-default-rtdb.firebaseio.com",
+  projectId:         "precheckout-316e4",
+  storageBucket:     "precheckout-316e4.firebasestorage.app",
+  messagingSenderId: "747403082101",
+  appId:             "1:747403082101:web:7bba1abc57c5020faffb3c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+// ═══════════════════════════════════════
+// DEFAULT DATA
+// ═══════════════════════════════════════
 const DA=[{id:'a1',name:'Skylar M.',phone:'(253) 722-3926'},{id:'a2',name:'Jamie Rodriguez',phone:'(253) 555-0102'},{id:'a3',name:'Dana Kim',phone:'(253) 555-0103'},{id:'a4',name:'Marcus Reed',phone:'(253) 555-0104'}];
 const DL=['LB-001','LB-002','LB-003','LB-004','LB-005','LB-006','LB-007','LB-008'].map((n,i)=>({id:'lb'+(i+1),number:n,agent:null,address:null,dateCheckedOut:null,forSaleSign:false,status:'available'}));
 
-const ga=()=>JSON.parse(localStorage.getItem('prec_agents')||JSON.stringify(DA));
-const gl=()=>JSON.parse(localStorage.getItem('prec_lockboxes')||JSON.stringify(DL));
-const gs=()=>JSON.parse(localStorage.getItem('prec_signs')||'[]');
-const gh=()=>JSON.parse(localStorage.getItem('prec_history')||'[]');
+// ═══════════════════════════════════════
+// IN-MEMORY CACHE (synced from Firebase)
+// ═══════════════════════════════════════
+let _agents=[...DA];
+let _lockboxes=[...DL];
+let _signs=[];
+let _history=[];
+
+const ga=()=>_agents;
+const gl=()=>_lockboxes;
+const gs=()=>_signs;
+const gh=()=>_history;
 const gu=()=>JSON.parse(localStorage.getItem('prec_user')||'null');
-const sa=d=>localStorage.setItem('prec_agents',JSON.stringify(d));
-const sl=d=>localStorage.setItem('prec_lockboxes',JSON.stringify(d));
-const ss=d=>localStorage.setItem('prec_signs',JSON.stringify(d));
-const sh2=d=>localStorage.setItem('prec_history',JSON.stringify(d));
 const su=d=>localStorage.setItem('prec_user',JSON.stringify(d));
 
-function addHist(type,action,detail,agent){const h=gh();h.unshift({id:uid(),type,action,detail,agent,timestamp:new Date().toISOString()});if(h.length>200)h.splice(200);sh2(h);}
-function initData(){if(!localStorage.getItem('prec_agents'))sa(DA);if(!localStorage.getItem('prec_lockboxes'))sl(DL);}
+async function sa(d){_agents=d;await set(ref(db,'agents'),d);}
+async function sl(d){_lockboxes=d;await set(ref(db,'lockboxes'),d);}
+async function ss(d){_signs=d;await set(ref(db,'signs'),d);}
+async function sh2(d){_history=d;await set(ref(db,'history'),d);}
 
+function addHist(type,action,detail,agent){
+  const h=gh();
+  h.unshift({id:uid(),type,action,detail,agent,timestamp:new Date().toISOString()});
+  if(h.length>200)h.splice(200);
+  sh2(h);
+}
+
+// ═══════════════════════════════════════
+// FIREBASE REAL-TIME LISTENERS
+// ═══════════════════════════════════════
+function initFirebase(){
+  // Show loading state
+  document.body.insertAdjacentHTML('beforeend','<div id="syncBanner" style="position:fixed;top:0;left:0;right:0;z-index:999;background:var(--bg3);color:var(--silver2);font-size:12px;text-align:center;padding:6px;border-bottom:.5px solid var(--border2)">Connecting...</div>');
+
+  onValue(ref(db,'agents'), snap=>{
+    if(snap.exists())_agents=snap.val();
+    else set(ref(db,'agents'),DA);
+    hideSyncBanner();renderAll();
+  });
+
+  onValue(ref(db,'lockboxes'), snap=>{
+    if(snap.exists())_lockboxes=snap.val();
+    else set(ref(db,'lockboxes'),DL);
+    renderAll();
+  });
+
+  onValue(ref(db,'signs'), snap=>{
+    _signs=snap.exists()?snap.val():[];
+    renderAll();
+  });
+
+  onValue(ref(db,'history'), snap=>{
+    _history=snap.exists()?snap.val():[];
+  });
+
+  onValue(ref(db,'oh_total'), snap=>{
+    if(snap.exists())localStorage.setItem('prec_oh_total',snap.val());
+  });
+}
+
+function hideSyncBanner(){
+  const b=document.getElementById('syncBanner');
+  if(b){b.textContent='Live';b.style.color='var(--green)';setTimeout(()=>b.remove(),1500);}
+}
+
+function setOHTotal(){
+  const current=localStorage.getItem('prec_oh_total')||'60';
+  const val=prompt(`How many open house signs do you have in total?\nCurrent: ${current}`);
+  if(val&&!isNaN(val)&&parseInt(val)>0){
+    localStorage.setItem('prec_oh_total',parseInt(val));
+    set(ref(db,'oh_total'),parseInt(val));
+    showToast('Total updated');
+    showInventorySheet();
+  }
+}
+
+// ═══════════════════════════════════════
 // UTILS
+// ═══════════════════════════════════════
 const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
 const tod=()=>new Date().toISOString().split('T')[0];
 const dsi=d=>d?Math.floor((new Date()-new Date(d))/(86400000)):0;
@@ -524,6 +637,10 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 function openSheet(id){document.getElementById(id).classList.add('open');}
 function closeSheet(id){document.getElementById(id).classList.remove('open');}
 
+// expose closeSheet globally for onclick handlers
+window.closeSheet=closeSheet;
+window.openSheet=openSheet;
+
 function navTo(pageId,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
@@ -532,6 +649,7 @@ function navTo(pageId,btn){
   else{const m={pageHome:0,pageLockboxes:1,pageSigns:2,pageAgents:3,pageSettings:4};const i=m[pageId];if(i!==undefined)document.querySelectorAll('.ni')[i].classList.add('active');}
   renderAll();
 }
+window.navTo=navTo;
 
 // SETUP
 function showSetup(){
@@ -616,7 +734,15 @@ function showLockboxDetail(id){
 
 function showCheckoutLockboxSheet(preId){
   const agents=ga(),boxes=gl().filter(b=>b.status==='available'),user=gu();
-  document.getElementById('coAgent').innerHTML=agents.map(a=>`<option value="${a.id}" ${user&&user.id===a.id?'selected':''}>${a.name}</option>`).join('');
+  const agSel=document.getElementById('coAgent');
+  // Lock to current user — admins can still pick any agent
+  if(adminUnlocked){
+    agSel.innerHTML=agents.map(a=>`<option value="${a.id}" ${user&&user.id===a.id?'selected':''}>${a.name}</option>`).join('');
+    agSel.disabled=false;
+  } else if(user){
+    agSel.innerHTML=`<option value="${user.id}">${user.name}</option>`;
+    agSel.disabled=true;
+  }
   document.getElementById('coLockbox').innerHTML=!boxes.length?'<option>No lockboxes available</option>':boxes.map(b=>`<option value="${b.id}" ${b.id===preId?'selected':''}>${b.number}</option>`).join('');
   document.getElementById('coAddress').value='';
   document.getElementById('coForSaleToggle').classList.remove('on');
@@ -632,7 +758,9 @@ function submitCheckoutLockbox(){
   const boxes=gl(),idx=boxes.findIndex(b=>b.id===lbId);if(idx===-1)return;
   boxes[idx]={...boxes[idx],status:'checkedout',agent:agent.name,address,dateCheckedOut:tod(),forSaleSign:forSale};
   sl(boxes);addHist('lockbox','checkout',`${boxes[idx].number} — ${address}`,agent.name);
-  closeSheet('checkoutLockboxSheet');showToast(`✅ ${boxes[idx].number} checked out`);renderAll();
+  closeSheet('checkoutLockboxSheet');
+  showSuccess('Lockbox Checked Out',`${boxes[idx].number} is now checked out to ${agent.name} at ${address}${forSale?' · For sale sign included':''}.`);
+  renderAll();
 }
 
 function returnLockbox(id){
@@ -699,7 +827,14 @@ function showSignDetail(id){
 
 function showCheckoutSignsSheet(){
   const agents=ga(),user=gu();
-  document.getElementById('csAgent').innerHTML=agents.map(a=>`<option value="${a.name}" ${user&&user.name===a.name?'selected':''}>${a.name}</option>`).join('');
+  const agSel=document.getElementById('csAgent');
+  if(adminUnlocked){
+    agSel.innerHTML=agents.map(a=>`<option value="${a.name}" ${user&&user.name===a.name?'selected':''}>${a.name}</option>`).join('');
+    agSel.disabled=false;
+  } else if(user){
+    agSel.innerHTML=`<option value="${user.name}">${user.name}</option>`;
+    agSel.disabled=true;
+  }
   document.getElementById('csQuantity').value='';openSheet('checkoutSignsSheet');
 }
 function submitCheckoutSigns(){
@@ -707,7 +842,9 @@ function submitCheckoutSigns(){
   if(!qty||qty<1){showToast('Please enter a valid quantity');return;}
   const signs=gs();signs.push({id:uid(),agent,quantity:qty,dateCheckedOut:tod(),dateReturned:null,status:'checkedout'});
   ss(signs);addHist('signs','checkout',`${qty} sign${qty!==1?'s':''} taken`,agent);
-  closeSheet('checkoutSignsSheet');showToast(`✅ ${qty} sign${qty!==1?'s':''} checked out`);renderAll();
+  closeSheet('checkoutSignsSheet');
+  showSuccess('Signs Checked Out',`${qty} open house sign${qty!==1?'s':''} checked out to ${agent}.`);
+  renderAll();
 }
 function returnSigns(id){
   const signs=gs(),idx=signs.findIndex(s=>s.id===id);if(idx===-1)return;
@@ -754,17 +891,41 @@ function submitAddAgent(){
   closeSheet('addAgentSheet');showToast(`✅ ${name} added`);renderAll();
 }
 
-// HOME
 function renderHome(){
   const user=gu();if(!user)return;
   const boxes=gl().filter(b=>b.agent===user.name&&b.status==='checkedout');
   const signs=gs().filter(s=>s.agent===user.name&&s.status==='checkedout');
   const all=[...boxes.map(b=>({type:'lockbox',label:b.number,sub:b.address||'No address',days:dsi(b.dateCheckedOut),id:b.id})),...signs.map(s=>({type:'signs',label:`${s.quantity} Sign${s.quantity!==1?'s':''}`,sub:`Since ${fmtD(s.dateCheckedOut)}`,days:dsi(s.dateCheckedOut),id:s.id}))];
   const list=document.getElementById('myCheckoutsList');
-  if(!all.length){list.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Nothing checked out</div></div>';return;}
-  const card=document.createElement('div');card.className='card';card.style.margin='0 16px 16px';
-  card.innerHTML=all.map(item=>`<div class="cr" onclick="${item.type==='lockbox'?`showLockboxDetail('${item.id}')`:`showSignDetail('${item.id}')`}">${item.type==='lockbox'?lbIcon('checkedout'):sgIcon()}<div class="ci"><div class="ct">${item.label}</div><div class="cs">${item.sub}</div></div><span class="badge${item.days>=10?' over':item.days>6?' warn':''}">${item.days}d</span></div>`).join('');
-  list.innerHTML='';list.appendChild(card);
+  if(!all.length){list.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Nothing checked out</div></div>';}
+  else{const card=document.createElement('div');card.className='card';card.style.margin='0 16px 10px';card.innerHTML=all.map(item=>`<div class="cr" onclick="${item.type==='lockbox'?`showLockboxDetail('${item.id}')`:`showSignDetail('${item.id}')`}">${item.type==='lockbox'?lbIcon('checkedout'):sgIcon()}<div class="ci"><div class="ct">${item.label}</div><div class="cs">${item.sub}</div></div><span class="badge${item.days>=10?' over':item.days>6?' warn':''}">${item.days}d</span></div>`).join('');list.innerHTML='';list.appendChild(card);}
+
+  // Inventory at a glance
+  const allBoxes=gl();
+  const lbAvail=allBoxes.filter(b=>b.status==='available').length;
+  const lbOut=allBoxes.filter(b=>b.status==='checkedout').length;
+  const fsOut=allBoxes.filter(b=>b.status==='checkedout'&&b.forSaleSign).length;
+  const ohTotal=parseInt(localStorage.getItem('prec_oh_total')||'60');
+  const ohOut=gs().filter(s=>s.status==='checkedout').reduce((sum,s)=>sum+s.quantity,0);
+  const ohAvail=Math.max(0,ohTotal-ohOut);
+  const inv=document.getElementById('homeInventory');
+  inv.innerHTML=`<div class="card" style="margin:0 16px 16px;display:grid;grid-template-columns:1fr 1fr 1fr;overflow:hidden">
+    <div style="padding:14px 12px;text-align:center;border-right:.5px solid var(--border2)">
+      <div style="font-size:22px;font-weight:600;color:var(--green)">${lbAvail}</div>
+      <div style="font-size:10px;color:var(--silver2);margin-top:3px;line-height:1.3">Lockboxes<br>Available</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">${lbOut} out</div>
+    </div>
+    <div style="padding:14px 12px;text-align:center;border-right:.5px solid var(--border2)">
+      <div style="font-size:22px;font-weight:600;color:${fsOut>0?'var(--amber)':'var(--green)'}">${fsOut}</div>
+      <div style="font-size:10px;color:var(--silver2);margin-top:3px;line-height:1.3">For Sale<br>Signs Out</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">${allBoxes.length-fsOut} avail</div>
+    </div>
+    <div style="padding:14px 12px;text-align:center">
+      <div style="font-size:22px;font-weight:600;color:${ohAvail<10?'var(--red)':ohAvail<20?'var(--amber)':'var(--green)'}">${ohAvail}</div>
+      <div style="font-size:10px;color:var(--silver2);margin-top:3px;line-height:1.3">Open House<br>Signs Avail</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">${ohOut} out</div>
+    </div>
+  </div>`;
 }
 
 // HISTORY
@@ -780,26 +941,175 @@ function showHistorySheet(filter){
 }
 function clearHistory(){if(!confirm('Clear all activity history?'))return;sh2([]);showToast('History cleared');}
 
+// ADMIN PIN
+const ADMIN_PIN='1234'; // change this to your preferred PIN
+let adminUnlocked=false;
+let adminPinCallback=null;
+
+function showAdminPinSheet(){
+  if(adminUnlocked){showAdminMenu();return;}
+  document.getElementById('adminPinTitle').textContent='Admin Access';
+  document.getElementById('adminPinInput').value='';
+  adminPinCallback=()=>showAdminMenu();
+  openSheet('adminPinSheet');
+}
+function submitAdminPin(){
+  const pin=document.getElementById('adminPinInput').value;
+  if(pin===ADMIN_PIN){
+    adminUnlocked=true;
+    closeSheet('adminPinSheet');
+    document.getElementById('adminRowLabel').textContent='Admin ✓';
+    document.getElementById('clearHistoryRow').style.display='flex';
+    if(adminPinCallback)adminPinCallback();
+    adminPinCallback=null;
+  } else {
+    showToast('Incorrect PIN');
+    document.getElementById('adminPinInput').value='';
+  }
+}
+function showAdminMenu(){showToast('Admin access granted');}
+
+// SUCCESS SCREEN
+function showSuccess(title, detail){
+  document.getElementById('successTitle').textContent=title;
+  document.getElementById('successDetail').textContent=detail;
+  openSheet('successSheet');
+}
+
 // INVENTORY
 function showInventorySheet(){
   const boxes=gl(),signs=gs();
-  const avail=boxes.filter(b=>b.status==='available').length;
-  const out=boxes.filter(b=>b.status==='checkedout').length;
-  const signsOut=signs.filter(s=>s.status==='checkedout').reduce((sum,s)=>sum+s.quantity,0);
-  const overdue=signs.filter(s=>s.status==='checkedout'&&dsi(s.dateCheckedOut)>=10).length;
+
+  // Lockboxes
+  const lbTotal=boxes.length;
+  const lbOut=boxes.filter(b=>b.status==='checkedout').length;
+  const lbAvail=lbTotal-lbOut;
+
+  // For Sale Signs (tracked via lockbox forSaleSign checkbox)
+  const fsTotal=boxes.length; // one per lockbox max
+  const fsOut=boxes.filter(b=>b.status==='checkedout'&&b.forSaleSign).length;
+  const fsAvail=fsTotal-fsOut;
+
+  // Open House Signs — need a total to track against
+  const ohTotal=parseInt(localStorage.getItem('prec_oh_total')||'60');
+  const ohOut=signs.filter(s=>s.status==='checkedout').reduce((sum,s)=>sum+s.quantity,0);
+  const ohAvail=Math.max(0,ohTotal-ohOut);
+  const ohOverdue=signs.filter(s=>s.status==='checkedout'&&dsi(s.dateCheckedOut)>=10).length;
+
+  function pct(used,total){return total?Math.round((used/total)*100):0;}
+  function bar(used,total){
+    const p=pct(used,total);
+    const color=p>80?'var(--red)':p>50?'var(--amber)':'var(--green)';
+    return`<div style="height:4px;background:var(--bg4);border-radius:2px;margin-top:6px"><div style="height:4px;border-radius:2px;background:${color};width:${p}%"></div></div>`;
+  }
+
   document.getElementById('inventoryDetail').innerHTML=`
-    <div class="cr"><div class="ci"><div class="ct">Total Lockboxes</div></div><div class="ct">${boxes.length}</div></div>
-    <div class="cr"><div class="ci"><div class="ct">Lockboxes Available</div></div><div class="ct" style="color:var(--green)">${avail}</div></div>
-    <div class="cr"><div class="ci"><div class="ct">Lockboxes Checked Out</div></div><div class="ct">${out}</div></div>
-    <div class="cr"><div class="ci"><div class="ct">Signs Currently Out</div></div><div class="ct">${signsOut}</div></div>
-    <div class="cr" style="border-bottom:none"><div class="ci"><div class="ct">Overdue Sign Checkouts</div></div><div class="ct" style="color:${overdue?'var(--red)':'var(--green)'}">${overdue}</div></div>
+    <div style="padding:16px 16px 12px;border-bottom:.5px solid var(--border2)">
+      <div style="font-size:11px;font-weight:600;color:var(--silver2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">Lockboxes</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:14px;color:var(--text2)">Total</span><span style="font-size:14px;font-weight:600">${lbTotal}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:14px;color:var(--text2)">Available</span><span style="font-size:14px;font-weight:600;color:var(--green)">${lbAvail}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:14px;color:var(--text2)">Checked Out</span><span style="font-size:14px;font-weight:600">${lbOut}</span>
+      </div>
+      ${bar(lbOut,lbTotal)}
+    </div>
+
+    <div style="padding:16px 16px 12px;border-bottom:.5px solid var(--border2)">
+      <div style="font-size:11px;font-weight:600;color:var(--silver2);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px">For Sale Signs</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:14px;color:var(--text2)">Total</span><span style="font-size:14px;font-weight:600">${fsTotal}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:14px;color:var(--text2)">Available</span><span style="font-size:14px;font-weight:600;color:var(--green)">${fsAvail}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:14px;color:var(--text2)">In Use</span><span style="font-size:14px;font-weight:600">${fsOut}</span>
+      </div>
+      ${bar(fsOut,fsTotal)}
+    </div>
+
+    <div style="padding:16px 16px 8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div style="font-size:11px;font-weight:600;color:var(--silver2);letter-spacing:.06em;text-transform:uppercase">Open House Signs</div>
+        <div style="font-size:12px;color:var(--silver);cursor:pointer" onclick="setOHTotal()">Set total ›</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:14px;color:var(--text2)">Total Inventory</span><span style="font-size:14px;font-weight:600">${ohTotal}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:14px;color:var(--text2)">Available</span><span style="font-size:14px;font-weight:600;color:var(--green)">${ohAvail}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <span style="font-size:14px;color:var(--text2)">Checked Out</span><span style="font-size:14px;font-weight:600">${ohOut}</span>
+      </div>
+      ${ohOverdue?`<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:14px;color:var(--text2)">Overdue Checkouts</span><span style="font-size:14px;font-weight:600;color:var(--red)">${ohOverdue}</span></div>`:''}
+      ${bar(ohOut,ohTotal)}
+    </div>
   `;
   openSheet('inventorySheet');
 }
 
+function setOHTotal(){
+  const current=localStorage.getItem('prec_oh_total')||'60';
+  const val=prompt(`How many open house signs do you have in total?\nCurrent: ${current}`);
+  if(val&&!isNaN(val)&&parseInt(val)>0){
+    localStorage.setItem('prec_oh_total',parseInt(val));
+    showToast('Total updated');
+    showInventorySheet();
+  }
+}
+
 function renderAll(){renderHome();renderLockboxes();renderSigns();renderAgents();updateHeader();}
 
-window.addEventListener('load',()=>{initData();const user=gu();if(!user)showSetup();else{updateHeader();renderAll();}});
+// Expose all functions needed by inline onclick handlers
+window.showToast=showToast;
+window.showCheckoutLockboxSheet=showCheckoutLockboxSheet;
+window.showCheckoutSignsSheet=showCheckoutSignsSheet;
+window.showLockboxDetail=showLockboxDetail;
+window.showSignDetail=showSignDetail;
+window.submitCheckoutLockbox=submitCheckoutLockbox;
+window.returnLockbox=returnLockbox;
+window.submitCheckoutSigns=submitCheckoutSigns;
+window.returnSigns=returnSigns;
+window.showAddLockboxSheet=showAddLockboxSheet;
+window.submitAddLockbox=submitAddLockbox;
+window.showAddAgentSheet=showAddAgentSheet;
+window.submitAddAgent=submitAddAgent;
+window.showAgentProfile=showAgentProfile;
+window.showUserSheet=showUserSheet;
+window.switchUser=switchUser;
+window.completeSetup=completeSetup;
+window.showHistorySheet=showHistorySheet;
+window.showInventorySheet=showInventorySheet;
+window.showAdminPinSheet=showAdminPinSheet;
+window.submitAdminPin=submitAdminPin;
+window.clearHistory=clearHistory;
+window.filterLB=filterLB;
+window.setOHTotal=setOHTotal;
+window.renderAll=renderAll;
+
+window.addEventListener('load',()=>{
+  const user=gu();
+  if(!user){
+    // Need agents list from Firebase before showing setup
+    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(({getDatabase,ref,get,onValue,set})=>{
+      initFirebase();
+      setTimeout(()=>{
+        if(!gu())showSetup();
+        else{updateHeader();renderAll();}
+      },1200);
+    });
+  } else {
+    initFirebase();
+    updateHeader();
+    renderAll();
+  }
+});
+
 document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');}));
 </script>
 </body>

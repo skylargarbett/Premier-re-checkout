@@ -46,7 +46,7 @@
   .ni:not(.active) svg{stroke:var(--silver2)}
 
   /* PAGES */
-  .page{display:none;padding-top:var(--hdr-h);padding-bottom:calc(var(--nav-h)+8px);min-height:100dvh}
+  .page{display:none;padding-top:var(--hdr-h);padding-bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 24px);min-height:100dvh}
   .page.active{display:block}
 
   /* GREETING */
@@ -108,7 +108,7 @@
   /* OVERLAY / SHEET */
   .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:flex-end;justify-content:center}
   .ov.open{display:flex}
-  .sheet{background:var(--bg2);width:100%;max-width:430px;border-radius:20px 20px 0 0;padding:0 0 env(safe-area-inset-bottom);max-height:92dvh;overflow-y:auto}
+  .sheet{background:var(--bg2);width:100%;max-width:430px;border-radius:20px 20px 0 0;padding:0 0 max(env(safe-area-inset-bottom), 16px);max-height:92dvh;overflow-y:auto}
   .s-handle{width:36px;height:4px;background:var(--bg4);border-radius:2px;margin:12px auto 0}
   .s-hdr{padding:16px 20px 14px;border-bottom:.5px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
   .s-title{font-size:17px;font-weight:600}
@@ -202,23 +202,61 @@
   .setup-field select option{background:#1c1c1e}
   .btn-setup{width:100%;padding:15px;border-radius:var(--radius);border:none;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:#fff;color:#000;margin-top:4px}
 </style>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
-<!-- SETUP -->
+<!-- LOGIN SCREEN -->
 <div class="setup" id="setupScreen">
   <div class="setup-logo">Premier<span>RE</span></div>
   <div class="setup-sub">Team Equipment Checkout</div>
   <div class="setup-card">
-    <h2>Who are you?</h2>
-    <p>Select your name to get started</p>
+    <h2>Sign In</h2>
+    <p>Select your name to access the app</p>
     <div class="setup-field">
       <label>Your Name</label>
-      <select id="setupAgent"><option value="">Select agent...</option></select>
-      <label>Phone (optional)</label>
-      <input type="tel" id="setupPhone" placeholder="(253) 000-0000">
+      <select id="setupAgent"><option value="">Loading agents...</option></select>
     </div>
-    <button class="btn-setup" onclick="completeSetup()">Get Started →</button>
+    <div id="setupError" style="display:none;font-size:13px;color:var(--red);margin-bottom:12px;text-align:center"></div>
+    <button class="btn-setup" onclick="completeSetup()">Sign In →</button>
+    <p style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center;margin-top:16px">Your name must be on the team roster to access this app.<br>Contact your admin if you're not listed.</p>
+  </div>
+</div>
+
+<!-- ADMIN MANAGEMENT SHEET -->
+<div class="ov" id="adminMgmtSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr">
+      <div class="s-title">Admin Management</div>
+      <button class="s-close" onclick="closeSheet('adminMgmtSheet')">✕</button>
+    </div>
+    <div style="padding:12px 16px 4px">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Admins can clear history, add/remove agents and lockboxes, and check out on behalf of others.</p>
+    </div>
+    <div class="sh" style="padding-top:4px">
+      <div class="st">Current Admins</div>
+      <div class="sa" onclick="showAddAdminSheet()">+ Add</div>
+    </div>
+    <div id="adminList"></div>
+    <div style="height:20px"></div>
+  </div>
+</div>
+
+<!-- ADD ADMIN SHEET -->
+<div class="ov" id="addAdminSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr">
+      <div class="s-title">Add Admin</div>
+      <button class="s-close" onclick="closeSheet('addAdminSheet')">✕</button>
+    </div>
+    <div class="s-body">
+      <div class="field">
+        <label>Select Agent</label>
+        <select id="addAdminSelect"></select>
+      </div>
+      <button class="btn btn-p" onclick="submitAddAdmin()">Grant Admin Access</button>
+    </div>
   </div>
 </div>
 
@@ -351,13 +389,12 @@
     <div class="sr" id="clearHistoryRow" onclick="clearHistory()" style="display:none">
       <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></div><div class="s-lbl" style="color:var(--red)">Clear All History</div></div>
     </div>
-    <div class="sr" onclick="showAdminPinSheet()">
-      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="s-lbl" id="adminRowLabel">Admin Access</div></div>
+    <div class="sr" id="adminMgmtRow" onclick="requireAdmin(showAdminMgmt)" style="display:none">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="s-lbl">Manage Admins</div></div>
       <div class="chev">›</div>
     </div>
   </div>
-  <!-- extra bottom padding so last row clears nav bar -->
-  <div style="height:32px"></div>
+  <!-- bottom padding handled by .page rule -->
 </div>
 
 <!-- NAV -->
@@ -492,14 +529,14 @@
   </div>
 </div>
 
-<!-- Admin PIN Sheet -->
+<!-- Admin PIN Sheet (used to verify before sensitive actions) -->
 <div class="ov" id="adminPinSheet">
   <div class="sheet"><div class="s-handle"></div>
-    <div class="s-hdr"><div class="s-title" id="adminPinTitle">Admin Access</div><button class="s-close" onclick="closeSheet('adminPinSheet')">✕</button></div>
+    <div class="s-hdr"><div class="s-title">Admin Verification</div><button class="s-close" onclick="closeSheet('adminPinSheet')">✕</button></div>
     <div class="s-body">
-      <p style="font-size:14px;color:var(--text2);margin-bottom:20px">Enter the admin PIN to continue.</p>
+      <p style="font-size:14px;color:var(--text2);margin-bottom:20px">This action requires admin access. Enter the admin PIN.</p>
       <div class="field"><label>PIN</label><input type="password" id="adminPinInput" placeholder="••••" maxlength="6" inputmode="numeric"></div>
-      <button class="btn btn-p" onclick="submitAdminPin()">Unlock</button>
+      <button class="btn btn-p" onclick="submitAdminPin()">Verify</button>
     </div>
   </div>
 </div>
@@ -515,31 +552,30 @@
     <div style="padding:0 20px 32px"><button class="btn btn-p" onclick="closeSheet('successSheet')">Done</button></div>
   </div>
 </div>
+<!-- Inventory Sheet -->
+<div class="ov" id="inventorySheet">
   <div class="sheet"><div class="s-handle"></div>
     <div class="s-hdr"><div class="s-title">Inventory Summary</div><button class="s-close" onclick="closeSheet('inventorySheet')">✕</button></div>
     <div style="padding:12px 16px 20px"><div class="card" style="margin:0" id="inventoryDetail"></div></div>
   </div>
 </div>
 
-<script type="module">
+<script>
 // ═══════════════════════════════════════
 // FIREBASE CONFIG — paste your values here
 // ═══════════════════════════════════════
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
-import { getDatabase, ref, set, get, push, onValue, remove } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js';
-
 const firebaseConfig = {
-  apiKey:            "AIzaSyBAZyZgqhxJf49-tPSxeOBTTyP1O8kXpls",
-  authDomain:        "precheckout-316e4.firebaseapp.com",
+  apiKey:            "PASTE_YOUR_API_KEY_HERE",
+  authDomain:        "PASTE_YOUR_AUTH_DOMAIN_HERE",
   databaseURL:       "https://precheckout-316e4-default-rtdb.firebaseio.com",
-  projectId:         "precheckout-316e4",
-  storageBucket:     "precheckout-316e4.firebasestorage.app",
-  messagingSenderId: "747403082101",
-  appId:             "1:747403082101:web:7bba1abc57c5020faffb3c"
+  projectId:         "PASTE_YOUR_PROJECT_ID_HERE",
+  storageBucket:     "PASTE_YOUR_STORAGE_BUCKET_HERE",
+  messagingSenderId: "PASTE_YOUR_MESSAGING_SENDER_ID_HERE",
+  appId:             "PASTE_YOUR_APP_ID_HERE"
 };
 
-const app = initializeApp(firebaseConfig);
-const db  = getDatabase(app);
+const app = firebase.initializeApp(firebaseConfig);
+const db  = firebase.database();
 
 // ═══════════════════════════════════════
 // DEFAULT DATA
@@ -562,10 +598,10 @@ const gh=()=>_history;
 const gu=()=>JSON.parse(localStorage.getItem('prec_user')||'null');
 const su=d=>localStorage.setItem('prec_user',JSON.stringify(d));
 
-async function sa(d){_agents=d;await set(ref(db,'agents'),d);}
-async function sl(d){_lockboxes=d;await set(ref(db,'lockboxes'),d);}
-async function ss(d){_signs=d;await set(ref(db,'signs'),d);}
-async function sh2(d){_history=d;await set(ref(db,'history'),d);}
+async function sa(d){_agents=d;await db.ref('agents').set(d);}
+async function sl(d){_lockboxes=d;await db.ref('lockboxes').set(d);}
+async function ss(d){_signs=d;await db.ref('signs').set(d);}
+async function sh2(d){_history=d;await db.ref('history').set(d);}
 
 function addHist(type,action,detail,agent){
   const h=gh();
@@ -578,31 +614,26 @@ function addHist(type,action,detail,agent){
 // FIREBASE REAL-TIME LISTENERS
 // ═══════════════════════════════════════
 function initFirebase(){
-  // Show loading state
   document.body.insertAdjacentHTML('beforeend','<div id="syncBanner" style="position:fixed;top:0;left:0;right:0;z-index:999;background:var(--bg3);color:var(--silver2);font-size:12px;text-align:center;padding:6px;border-bottom:.5px solid var(--border2)">Connecting...</div>');
 
-  onValue(ref(db,'agents'), snap=>{
-    if(snap.exists())_agents=snap.val();
-    else set(ref(db,'agents'),DA);
+  db.ref('agents').on('value', snap=>{
+    if(snap.exists())_agents=Object.values(snap.val());
+    else db.ref('agents').set(DA);
     hideSyncBanner();renderAll();
   });
-
-  onValue(ref(db,'lockboxes'), snap=>{
-    if(snap.exists())_lockboxes=snap.val();
-    else set(ref(db,'lockboxes'),DL);
+  db.ref('lockboxes').on('value', snap=>{
+    if(snap.exists())_lockboxes=Object.values(snap.val());
+    else db.ref('lockboxes').set(DL);
     renderAll();
   });
-
-  onValue(ref(db,'signs'), snap=>{
-    _signs=snap.exists()?snap.val():[];
+  db.ref('signs').on('value', snap=>{
+    _signs=snap.exists()?Object.values(snap.val()):[];
     renderAll();
   });
-
-  onValue(ref(db,'history'), snap=>{
-    _history=snap.exists()?snap.val():[];
+  db.ref('history').on('value', snap=>{
+    _history=snap.exists()?Object.values(snap.val()):[];
   });
-
-  onValue(ref(db,'oh_total'), snap=>{
+  db.ref('oh_total').on('value', snap=>{
     if(snap.exists())localStorage.setItem('prec_oh_total',snap.val());
   });
 }
@@ -617,7 +648,7 @@ function setOHTotal(){
   const val=prompt(`How many open house signs do you have in total?\nCurrent: ${current}`);
   if(val&&!isNaN(val)&&parseInt(val)>0){
     localStorage.setItem('prec_oh_total',parseInt(val));
-    set(ref(db,'oh_total'),parseInt(val));
+    db.ref('oh_total').set(parseInt(val));
     showToast('Total updated');
     showInventorySheet();
   }
@@ -637,10 +668,6 @@ function showToast(msg){const t=document.getElementById('toast');t.textContent=m
 function openSheet(id){document.getElementById(id).classList.add('open');}
 function closeSheet(id){document.getElementById(id).classList.remove('open');}
 
-// expose closeSheet globally for onclick handlers
-window.closeSheet=closeSheet;
-window.openSheet=openSheet;
-
 function navTo(pageId,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById(pageId).classList.add('active');
@@ -649,23 +676,31 @@ function navTo(pageId,btn){
   else{const m={pageHome:0,pageLockboxes:1,pageSigns:2,pageAgents:3,pageSettings:4};const i=m[pageId];if(i!==undefined)document.querySelectorAll('.ni')[i].classList.add('active');}
   renderAll();
 }
-window.navTo=navTo;
 
-// SETUP
 function showSetup(){
   const sel=document.getElementById('setupAgent');
-  sel.innerHTML='<option value="">Select agent...</option>';
-  ga().forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=a.name;sel.appendChild(o);});
+  const agents=_agents.length?_agents:DA;
+  sel.innerHTML='<option value="">Select your name...</option>';
+  agents.forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=a.name;sel.appendChild(o);});
   document.getElementById('setupScreen').classList.add('open');
+  // Re-populate if Firebase loads agents after setup is shown
+  setTimeout(()=>{
+    if(_agents.length&&_agents!==agents){
+      sel.innerHTML='<option value="">Select your name...</option>';
+      _agents.forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=a.name;sel.appendChild(o);});
+    }
+  },2000);
 }
 function completeSetup(){
   const id=document.getElementById('setupAgent').value;
-  if(!id){showToast('Please select your name');return;}
+  const errEl=document.getElementById('setupError');
+  if(!id){errEl.textContent='Please select your name';errEl.style.display='block';return;}
+  errEl.style.display='none';
   const agents=ga(),agent=agents.find(a=>a.id===id);
-  const phone=document.getElementById('setupPhone').value;
-  if(phone){agent.phone=phone;sa(agents);}
-  su(agent);document.getElementById('setupScreen').classList.remove('open');
-  updateHeader();renderAll();
+  if(!agent){errEl.textContent='Agent not found. Contact your admin.';errEl.style.display='block';return;}
+  su(agent);
+  document.getElementById('setupScreen').classList.remove('open');
+  updateHeader();updateAdminUI();renderAll();
 }
 function switchUser(){closeSheet('userSheet');su(null);showSetup();}
 function updateHeader(){
@@ -941,33 +976,106 @@ function showHistorySheet(filter){
 }
 function clearHistory(){if(!confirm('Clear all activity history?'))return;sh2([]);showToast('History cleared');}
 
-// ADMIN PIN
-const ADMIN_PIN='1234'; // change this to your preferred PIN
+// ═══════════════════════════════════════
+// ADMIN SYSTEM
+// ═══════════════════════════════════════
+const ADMIN_PIN='2025'; // fallback PIN for first-time setup
 let adminUnlocked=false;
 let adminPinCallback=null;
 
-function showAdminPinSheet(){
-  if(adminUnlocked){showAdminMenu();return;}
-  document.getElementById('adminPinTitle').textContent='Admin Access';
+function getAdmins(){return JSON.parse(localStorage.getItem('prec_admins')||'[]');}
+function saveAdmins(d){localStorage.setItem('prec_admins',JSON.stringify(d));}
+
+function isAdmin(name){
+  const admins=getAdmins();
+  // If no admins set yet, anyone can be admin (first-time setup)
+  if(!admins.length)return true;
+  return admins.includes(name);
+}
+
+function updateAdminUI(){
+  const user=gu();
+  const admin=user&&isAdmin(user.name);
+  adminUnlocked=admin;
+  const clr=document.getElementById('clearHistoryRow');
+  const mgmt=document.getElementById('adminMgmtRow');
+  if(clr)clr.style.display=admin?'flex':'none';
+  if(mgmt)mgmt.style.display=admin?'flex':'none';
+}
+
+function requireAdmin(callback){
+  const user=gu();
+  if(user&&isAdmin(user.name)){callback();return;}
+  // Not an admin — ask for PIN as fallback
+  adminPinCallback=callback;
   document.getElementById('adminPinInput').value='';
-  adminPinCallback=()=>showAdminMenu();
   openSheet('adminPinSheet');
 }
+
 function submitAdminPin(){
   const pin=document.getElementById('adminPinInput').value;
   if(pin===ADMIN_PIN){
     adminUnlocked=true;
     closeSheet('adminPinSheet');
-    document.getElementById('adminRowLabel').textContent='Admin ✓';
-    document.getElementById('clearHistoryRow').style.display='flex';
-    if(adminPinCallback)adminPinCallback();
-    adminPinCallback=null;
+    updateAdminUI();
+    if(adminPinCallback){adminPinCallback();adminPinCallback=null;}
   } else {
     showToast('Incorrect PIN');
     document.getElementById('adminPinInput').value='';
   }
 }
-function showAdminMenu(){showToast('Admin access granted');}
+
+function showAdminMgmt(){
+  const admins=getAdmins();
+  const agents=ga();
+  const list=document.getElementById('adminList');
+  if(!admins.length){
+    list.innerHTML='<div class="empty" style="padding:20px"><div class="empty-text">No admins set — use PIN 2025 to access</div></div>';
+  } else {
+    const card=document.createElement('div');card.className='card';card.style.margin='0 16px 10px';
+    card.innerHTML=admins.map(name=>`
+      <div class="cr">
+        <div class="avatar" style="width:38px;height:38px;font-size:12px;flex-shrink:0;border-radius:50%;background:var(--bg4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--silver)">${ini(name)}</div>
+        <div class="ci"><div class="ct">${name}</div></div>
+        <button onclick="removeAdmin('${name}')" style="background:rgba(255,69,58,.15);border:1px solid rgba(255,69,58,.2);color:var(--red);border-radius:8px;padding:5px 12px;font-size:12px;font-weight:600;cursor:pointer">Remove</button>
+      </div>
+    `).join('');
+    list.innerHTML='';list.appendChild(card);
+  }
+  openSheet('adminMgmtSheet');
+}
+
+function showAddAdminSheet(){
+  const agents=ga();
+  const admins=getAdmins();
+  const available=agents.filter(a=>!admins.includes(a.name));
+  const sel=document.getElementById('addAdminSelect');
+  if(!available.length){showToast('All agents are already admins');return;}
+  sel.innerHTML=available.map(a=>`<option value="${a.name}">${a.name}</option>`).join('');
+  openSheet('addAdminSheet');
+}
+
+function submitAddAdmin(){
+  const name=document.getElementById('addAdminSelect').value;
+  if(!name)return;
+  const admins=getAdmins();
+  if(!admins.includes(name))admins.push(name);
+  saveAdmins(admins);
+  closeSheet('addAdminSheet');
+  showToast(`✅ ${name} is now an admin`);
+  showAdminMgmt();
+  updateAdminUI();
+}
+
+function removeAdmin(name){
+  const user=gu();
+  if(user&&user.name===name){showToast("You can't remove yourself");return;}
+  const admins=getAdmins().filter(a=>a!==name);
+  saveAdmins(admins);
+  showToast(`${name} removed as admin`);
+  showAdminMgmt();
+  updateAdminUI();
+}
 
 // SUCCESS SCREEN
 function showSuccess(title, detail){
@@ -1053,64 +1161,24 @@ function showInventorySheet(){
   openSheet('inventorySheet');
 }
 
-function setOHTotal(){
-  const current=localStorage.getItem('prec_oh_total')||'60';
-  const val=prompt(`How many open house signs do you have in total?\nCurrent: ${current}`);
-  if(val&&!isNaN(val)&&parseInt(val)>0){
-    localStorage.setItem('prec_oh_total',parseInt(val));
-    showToast('Total updated');
-    showInventorySheet();
-  }
-}
 
 function renderAll(){renderHome();renderLockboxes();renderSigns();renderAgents();updateHeader();}
 
-// Expose all functions needed by inline onclick handlers
-window.showToast=showToast;
-window.showCheckoutLockboxSheet=showCheckoutLockboxSheet;
-window.showCheckoutSignsSheet=showCheckoutSignsSheet;
-window.showLockboxDetail=showLockboxDetail;
-window.showSignDetail=showSignDetail;
-window.submitCheckoutLockbox=submitCheckoutLockbox;
-window.returnLockbox=returnLockbox;
-window.submitCheckoutSigns=submitCheckoutSigns;
-window.returnSigns=returnSigns;
-window.showAddLockboxSheet=showAddLockboxSheet;
-window.submitAddLockbox=submitAddLockbox;
-window.showAddAgentSheet=showAddAgentSheet;
-window.submitAddAgent=submitAddAgent;
-window.showAgentProfile=showAgentProfile;
-window.showUserSheet=showUserSheet;
-window.switchUser=switchUser;
-window.completeSetup=completeSetup;
-window.showHistorySheet=showHistorySheet;
-window.showInventorySheet=showInventorySheet;
-window.showAdminPinSheet=showAdminPinSheet;
-window.submitAdminPin=submitAdminPin;
-window.clearHistory=clearHistory;
-window.filterLB=filterLB;
-window.setOHTotal=setOHTotal;
-window.renderAll=renderAll;
-
 window.addEventListener('load',()=>{
+  initFirebase();
+  // Show login immediately using cached or default agents
   const user=gu();
   if(!user){
-    // Need agents list from Firebase before showing setup
-    import('https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js').then(({getDatabase,ref,get,onValue,set})=>{
-      initFirebase();
-      setTimeout(()=>{
-        if(!gu())showSetup();
-        else{updateHeader();renderAll();}
-      },1200);
-    });
+    // Populate setup with default agents right away, Firebase will update them
+    setTimeout(()=>showSetup(),200);
   } else {
-    initFirebase();
-    updateHeader();
-    renderAll();
+    updateHeader();updateAdminUI();renderAll();
   }
 });
 
 document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');}));
 </script>
+</body>
+</html>
 </body>
 </html>

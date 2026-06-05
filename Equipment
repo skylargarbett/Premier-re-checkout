@@ -216,11 +216,15 @@
     <p>Select your name to access the app</p>
     <div class="setup-field">
       <label>Your Name</label>
-      <select id="setupAgent"><option value="">Loading agents...</option></select>
+      <select id="setupAgent" onchange="handleSetupChange()"><option value="">Loading agents...</option></select>
+      <div id="pinField" style="display:none">
+        <label>Admin PIN</label>
+        <input type="password" id="setupPin" placeholder="••••" maxlength="6" inputmode="numeric">
+      </div>
     </div>
     <div id="setupError" style="display:none;font-size:13px;color:var(--red);margin-bottom:12px;text-align:center"></div>
     <button class="btn-setup" onclick="completeSetup()">Sign In →</button>
-    <p style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center;margin-top:16px">Your name must be on the team roster to access this app.<br>Contact your admin if you're not listed.</p>
+    <p style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center;margin-top:16px">Your name must be on the team roster.<br>Contact your admin if you're not listed.</p>
   </div>
 </div>
 
@@ -726,25 +730,70 @@ function navTo(pageId,btn){
   renderAll();
 }
 
+// ═══════════════════════════════════════
+// ADMIN ACCOUNT
+// ═══════════════════════════════════════
+const ADMIN_ACCOUNT = { id: 'admin', name: 'Admin' };
+const ADMIN_ACCOUNT_PIN = '3699';
+
+function handleSetupChange(){
+  const sel = document.getElementById('setupAgent');
+  const pinField = document.getElementById('pinField');
+  const pinInput = document.getElementById('setupPin');
+  if(sel.value === 'admin'){
+    pinField.style.display = 'block';
+    pinInput.value = '';
+    pinInput.focus();
+  } else {
+    pinField.style.display = 'none';
+    pinInput.value = '';
+  }
+}
+
 function showSetup(){
   const sel=document.getElementById('setupAgent');
   const agents=_agents.length?_agents:DA;
   sel.innerHTML='<option value="">Select your name...</option>';
+  // Add Admin account first
+  const adminOpt=document.createElement('option');
+  adminOpt.value='admin';adminOpt.textContent='Admin';
+  sel.appendChild(adminOpt);
+  // Add regular agents
   agents.forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=a.name;sel.appendChild(o);});
+  document.getElementById('pinField').style.display='none';
   document.getElementById('setupScreen').classList.add('open');
-  // Re-populate if Firebase loads agents after setup is shown
+  // Re-populate when Firebase loads
   setTimeout(()=>{
     if(_agents.length&&_agents!==agents){
+      const cur=sel.value;
       sel.innerHTML='<option value="">Select your name...</option>';
+      const ao=document.createElement('option');ao.value='admin';ao.textContent='Admin';sel.appendChild(ao);
       _agents.forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=a.name;sel.appendChild(o);});
+      sel.value=cur;
     }
   },2000);
 }
+
 function completeSetup(){
   const id=document.getElementById('setupAgent').value;
   const errEl=document.getElementById('setupError');
-  if(!id){errEl.textContent='Please select your name';errEl.style.display='block';return;}
   errEl.style.display='none';
+  if(!id){errEl.textContent='Please select your name';errEl.style.display='block';return;}
+
+  // Admin account — verify PIN
+  if(id==='admin'){
+    const pin=document.getElementById('setupPin').value;
+    if(pin!==ADMIN_ACCOUNT_PIN){errEl.textContent='Incorrect PIN';errEl.style.display='block';return;}
+    // Sign in as the hardcoded admin agent (Skylar Garbett)
+    const agents=ga();
+    const adminAgent=agents.find(a=>HARDCODED_ADMINS.includes(a.name))||{id:'admin',name:'Skylar Garbett',phone:'(253) 722-3926'};
+    su(adminAgent);
+    document.getElementById('setupScreen').classList.remove('open');
+    updateHeader();updateAdminUI();renderAll();
+    return;
+  }
+
+  // Regular agent
   const agents=ga(),agent=agents.find(a=>a.id===id);
   if(!agent){errEl.textContent='Agent not found. Contact your admin.';errEl.style.display='block';return;}
   su(agent);

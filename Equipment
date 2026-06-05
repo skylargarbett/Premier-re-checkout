@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Premier RE Checkout</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:      #000000;
+    --bg2:     #111111;
+    --bg3:     #1c1c1e;
+    --bg4:     #2c2c2e;
+    --border:  #3a3a3c;
+    --border2: #2c2c2e;
+    --text:    #ffffff;
+    --text2:   rgba(235,235,245,0.6);
+    --text3:   rgba(235,235,245,0.3);
+    --silver:  #c8c8cc;
+    --silver2: #8e8e93;
+    --red:     #ff453a;
+    --green:   #32d74b;
+    --amber:   #ffd60a;
+    --radius:  13px;
+    --radius-sm:10px;
+    --nav-h:   74px;
+    --hdr-h:   56px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;max-width:430px;margin:0 auto;overflow-x:hidden}
+
+  /* HEADER */
+  .hdr{position:fixed;top:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:var(--hdr-h);background:rgba(0,0,0,0.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-bottom:.5px solid var(--border2);display:flex;align-items:center;justify-content:space-between;padding:0 20px;z-index:100}
+  .hdr-logo{font-size:16px;font-weight:600;letter-spacing:-.4px}
+  .hdr-logo span{color:var(--silver2)}
+  .avatar{width:30px;height:30px;border-radius:50%;background:var(--bg4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--silver);cursor:pointer}
+  .avatar.lg{width:58px;height:58px;font-size:19px;background:var(--bg3);border:1.5px solid var(--silver2);color:var(--text)}
+
+  /* NAV */
+  .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;height:var(--nav-h);background:rgba(0,0,0,0.88);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:.5px solid var(--border2);display:flex;z-index:100;padding-bottom:env(safe-area-inset-bottom)}
+  .ni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:8px 0 6px;border:none;background:none}
+  .ni svg{width:24px;height:24px;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .ni span{font-size:10px;font-weight:500;color:var(--silver2)}
+  .ni.active svg{stroke:var(--silver)}
+  .ni.active span{color:var(--silver)}
+  .ni:not(.active) svg{stroke:var(--silver2)}
+
+  /* PAGES */
+  .page{display:none;padding-top:var(--hdr-h);padding-bottom:calc(var(--nav-h)+8px);min-height:100dvh}
+  .page.active{display:block}
+
+  /* GREETING */
+  .greet{padding:24px 20px 16px}
+  .greet-sub{font-size:13px;color:var(--text2);margin-bottom:3px}
+  .greet-name{font-size:26px;font-weight:600;letter-spacing:-.6px}
+  .greet-name span{color:var(--silver2)}
+
+  /* ACTION GRID */
+  .ag{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 16px 8px}
+  .ac{background:var(--bg3);border:.5px solid var(--border2);border-radius:var(--radius);padding:16px;cursor:pointer;transition:opacity .15s;text-align:left}
+  .ac:active{opacity:.55}
+  .ai{width:42px;height:42px;border-radius:10px;background:var(--bg4);display:flex;align-items:center;justify-content:center;margin-bottom:12px}
+  .ai svg{width:24px;height:24px;fill:none;stroke:var(--silver);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .al{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+  .as{font-size:11px;color:var(--silver2)}
+
+  /* SEC HEADER */
+  .sh{display:flex;align-items:center;justify-content:space-between;padding:18px 16px 8px}
+  .st{font-size:11px;font-weight:600;color:var(--silver2);letter-spacing:.06em;text-transform:uppercase}
+  .sa{font-size:13px;font-weight:500;color:var(--silver);cursor:pointer}
+
+  /* CARD */
+  .card{background:var(--bg3);border:.5px solid var(--border2);border-radius:var(--radius);margin:0 16px 10px;overflow:hidden}
+  .cr{display:flex;align-items:center;padding:13px 16px;gap:12px;cursor:pointer;transition:background .1s}
+  .cr:active{background:var(--bg4)}
+  .cr+.cr{border-top:.5px solid var(--border2)}
+  .ci{flex:1;min-width:0}
+  .ct{font-size:14px;font-weight:600;color:var(--text)}
+  .cs{font-size:12px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cm{font-size:11px;color:var(--text3);margin-top:2px}
+  .crt{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+  .chev{color:var(--text3);font-size:16px}
+
+  /* ITEM ICON */
+  .ii{width:42px;height:42px;border-radius:var(--radius-sm);background:var(--bg4);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .ii svg{width:24px;height:24px;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+  .ii.bright svg{stroke:var(--silver)}
+  .ii.dim svg{stroke:var(--silver2)}
+
+  /* PILL */
+  .pill{font-size:10px;font-weight:600;padding:3px 8px;border-radius:20px;white-space:nowrap}
+  .p-out{background:rgba(255,255,255,.1);color:var(--silver)}
+  .p-avail{background:rgba(50,215,75,.15);color:var(--green)}
+  .p-ret{background:rgba(255,255,255,.06);color:var(--silver2)}
+  .p-over{background:rgba(255,69,58,.2);color:var(--red)}
+
+  /* BADGE */
+  .badge{font-family:'DM Mono',monospace;font-size:11px;font-weight:500;padding:2px 7px;border-radius:5px;background:var(--bg4);color:var(--silver2)}
+  .badge.warn{background:rgba(255,214,10,.15);color:var(--amber)}
+  .badge.over{background:rgba(255,69,58,.2);color:var(--red)}
+
+  /* FILTER TABS */
+  .ft{display:flex;gap:8px;padding:12px 16px;overflow-x:auto;scrollbar-width:none}
+  .ft::-webkit-scrollbar{display:none}
+  .ftb{padding:6px 14px;border-radius:100px;font-size:12px;font-weight:500;border:1px solid var(--border);color:var(--silver2);cursor:pointer;white-space:nowrap;background:transparent;transition:all .15s}
+  .ftb.active{background:var(--silver);border-color:var(--silver);color:#000}
+
+  /* OVERLAY / SHEET */
+  .ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:flex-end;justify-content:center}
+  .ov.open{display:flex}
+  .sheet{background:var(--bg2);width:100%;max-width:430px;border-radius:20px 20px 0 0;padding:0 0 env(safe-area-inset-bottom);max-height:92dvh;overflow-y:auto}
+  .s-handle{width:36px;height:4px;background:var(--bg4);border-radius:2px;margin:12px auto 0}
+  .s-hdr{padding:16px 20px 14px;border-bottom:.5px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+  .s-title{font-size:17px;font-weight:600}
+  .s-close{width:28px;height:28px;border-radius:50%;background:var(--bg4);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--silver2)}
+  .s-body{padding:20px}
+
+  /* FORM */
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:11px;font-weight:600;color:var(--silver2);margin-bottom:6px;letter-spacing:.04em;text-transform:uppercase}
+  .field input,.field select{width:100%;border:.5px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;font-size:15px;font-family:'DM Sans',sans-serif;color:var(--text);background:var(--bg3);outline:none;transition:border-color .15s;appearance:none}
+  .field input:focus,.field select:focus{border-color:var(--silver)}
+  .field input::placeholder{color:var(--text3)}
+  .field select{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238e8e93' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+  .field select option{background:#1c1c1e;color:#fff}
+
+  /* TOGGLE */
+  .tog-row{display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:.5px solid var(--border2);margin-bottom:16px}
+  .tog-lbl{font-size:15px;font-weight:500;color:var(--text)}
+  .tog-sub{font-size:12px;color:var(--silver2);margin-top:2px}
+  .toggle{width:50px;height:30px;border-radius:15px;background:var(--bg4);position:relative;cursor:pointer;transition:background .2s;flex-shrink:0;border:none}
+  .toggle.on{background:var(--silver)}
+  .toggle::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 2px 4px rgba(0,0,0,.4)}
+  .toggle.on::after{transform:translateX(20px)}
+
+  /* BUTTONS */
+  .btn{width:100%;padding:15px;border-radius:var(--radius);border:none;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;transition:opacity .15s}
+  .btn:active{opacity:.65}
+  .btn+.btn{margin-top:8px}
+  .btn-p{background:var(--silver);color:#000}
+  .btn-d{background:rgba(255,69,58,.18);color:var(--red);border:1px solid rgba(255,69,58,.25)}
+  .btn-o{background:var(--bg3);border:.5px solid var(--border);color:var(--text)}
+
+  /* DETAIL */
+  .d-info{padding:8px 20px 4px}
+  .ir{display:flex;align-items:flex-start;padding:12px 0;border-bottom:.5px solid var(--border2);gap:12px}
+  .ir:last-child{border-bottom:none}
+  .il{font-size:12px;color:var(--silver2);width:110px;flex-shrink:0;padding-top:1px}
+  .iv{font-size:14px;font-weight:500;color:var(--text);flex:1}
+  .d-act{padding:4px 20px 20px;display:flex;flex-direction:column;gap:8px}
+
+  /* PROFILE HERO */
+  .p-hero{background:var(--bg3);padding:24px 20px 20px;display:flex;align-items:center;gap:16px;border-bottom:.5px solid var(--border2)}
+  .p-name{font-size:20px;font-weight:600;color:var(--text)}
+  .p-phone{font-size:13px;color:var(--silver2);margin-top:3px}
+
+  /* SETTINGS */
+  .sg{margin:0 16px 20px}
+  .sg-lbl{font-size:11px;font-weight:600;color:var(--silver2);letter-spacing:.06em;text-transform:uppercase;padding:0 4px 8px}
+  .sr{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;background:var(--bg3);border-bottom:.5px solid var(--border2);cursor:pointer}
+  .sr:first-of-type{border-radius:var(--radius) var(--radius) 0 0}
+  .sr:last-of-type{border-radius:0 0 var(--radius) var(--radius);border-bottom:none}
+  .sr:only-of-type{border-radius:var(--radius);border-bottom:none}
+  .sr-l{display:flex;align-items:center;gap:12px}
+  .s-ico{width:32px;height:32px;border-radius:8px;background:var(--bg4);display:flex;align-items:center;justify-content:center}
+  .s-ico svg{width:16px;height:16px;stroke:var(--silver);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  .s-lbl{font-size:15px;font-weight:500;color:var(--text)}
+  .s-val{font-size:13px;color:var(--silver2)}
+
+  /* HISTORY */
+  .hi{display:flex;align-items:center;padding:12px 16px;gap:12px;border-bottom:.5px solid var(--border2)}
+  .hi:last-child{border-bottom:none}
+  .h-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+  .h-dot.co{background:var(--silver)}
+  .h-dot.re{background:var(--green)}
+  .h-info{flex:1}
+  .h-title{font-size:13px;font-weight:500;color:var(--text)}
+  .h-sub{font-size:11px;color:var(--silver2);margin-top:2px}
+  .h-time{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;flex-shrink:0}
+
+  /* TOAST */
+  .toast{position:fixed;bottom:calc(var(--nav-h)+16px);left:50%;transform:translateX(-50%) translateY(10px);background:var(--bg3);border:.5px solid var(--border);color:var(--text);padding:12px 20px;border-radius:100px;font-size:13px;font-weight:500;opacity:0;transition:all .25s;z-index:300;white-space:nowrap;pointer-events:none;box-shadow:0 8px 32px rgba(0,0,0,.5)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  /* EMPTY */
+  .empty{text-align:center;padding:36px 20px;color:var(--text3)}
+  .empty-icon{font-size:32px;margin-bottom:10px}
+  .empty-text{font-size:14px}
+
+  /* SETUP */
+  .setup{display:none;position:fixed;inset:0;background:#000;z-index:500;align-items:center;justify-content:center;flex-direction:column;padding:40px 24px}
+  .setup.open{display:flex}
+  .setup-logo{font-size:32px;font-weight:700;letter-spacing:-1px;margin-bottom:6px}
+  .setup-logo span{color:var(--silver2)}
+  .setup-sub{font-size:14px;color:var(--text3);margin-bottom:48px;text-align:center}
+  .setup-card{background:var(--bg3);border:.5px solid var(--border);border-radius:18px;padding:24px;width:100%}
+  .setup-card h2{font-size:19px;font-weight:600;margin-bottom:4px}
+  .setup-card p{font-size:13px;color:var(--text3);margin-bottom:20px}
+  .setup-field label{display:block;font-size:11px;font-weight:600;color:var(--silver2);margin-bottom:6px;letter-spacing:.05em;text-transform:uppercase}
+  .setup-field input,.setup-field select{width:100%;background:var(--bg4);border:.5px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;font-size:15px;font-family:'DM Sans',sans-serif;color:#fff;outline:none;margin-bottom:14px;appearance:none}
+  .setup-field input::placeholder{color:var(--text3)}
+  .setup-field select option{background:#1c1c1e}
+  .btn-setup{width:100%;padding:15px;border-radius:var(--radius);border:none;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:#fff;color:#000;margin-top:4px}
+</style>
+</head>
+<body>
+
+<!-- SETUP -->
+<div class="setup" id="setupScreen">
+  <div class="setup-logo">Premier<span>RE</span></div>
+  <div class="setup-sub">Team Equipment Checkout</div>
+  <div class="setup-card">
+    <h2>Who are you?</h2>
+    <p>Select your name to get started</p>
+    <div class="setup-field">
+      <label>Your Name</label>
+      <select id="setupAgent"><option value="">Select agent...</option></select>
+      <label>Phone (optional)</label>
+      <input type="tel" id="setupPhone" placeholder="(253) 000-0000">
+    </div>
+    <button class="btn-setup" onclick="completeSetup()">Get Started →</button>
+  </div>
+</div>
+
+<!-- HEADER -->
+<header class="hdr">
+  <div class="hdr-logo">Premier<span>RE</span></div>
+  <div class="avatar" id="headerAvatar" onclick="showUserSheet()">?</div>
+</header>
+
+<!-- HOME -->
+<div class="page active" id="pageHome">
+  <div class="greet">
+    <div class="greet-sub">Good to see you,</div>
+    <div class="greet-name" id="greetingName">Agent <span>—</span></div>
+  </div>
+  <div class="sh" style="padding-top:4px"><div class="st">Quick Actions</div></div>
+  <div class="ag">
+    <div class="ac" onclick="showCheckoutLockboxSheet()">
+      <div class="ai">
+        <!-- Door-hanger lockbox: loop hook + body + keyhole -->
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C10 2 9 3.2 9 4.5C9 5.8 10.3 7 12 7C13.7 7 15 5.8 15 4.5C15 3.2 14 2 12 2Z"/><rect x="6" y="7" width="12" height="15" rx="2.5"/><circle cx="12" cy="13.5" r="1.5"/><path d="M12 15v2.5"/></svg>
+      </div>
+      <div class="al">Check Out Lockbox</div>
+      <div class="as">Log a new checkout</div>
+    </div>
+    <div class="ac" onclick="navTo('pageLockboxes')">
+      <div class="ai">
+        <!-- Lockbox with shackle open to side = return -->
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4.5C15 3.2 14 2 12 2C10 2 9 3.2 9 4.5V7"/><path d="M9 7H6"/><rect x="6" y="7" width="12" height="15" rx="2.5"/><circle cx="12" cy="13.5" r="1.5"/><path d="M12 15v2.5"/></svg>
+      </div>
+      <div class="al">Return Lockbox</div>
+      <div class="as">Mark as returned</div>
+    </div>
+    <div class="ac" onclick="showCheckoutSignsSheet()">
+      <div class="ai">
+        <!-- For sale sign: rectangle with text lines + two legs -->
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="18" y2="6.5"/><line x1="6" y1="9.5" x2="15" y2="9.5"/><line x1="6" y1="12" x2="11" y2="12"/><line x1="9" y1="15" x2="9" y2="22"/><line x1="15" y1="15" x2="15" y2="22"/></svg>
+      </div>
+      <div class="al">Check Out Signs</div>
+      <div class="as">Open house signs</div>
+    </div>
+    <div class="ac" onclick="navTo('pageSigns')">
+      <div class="ai">
+        <!-- Sign with return arrow + two legs -->
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="14" y2="6.5"/><line x1="6" y1="9.5" x2="12" y2="9.5"/><path d="M16 6l2.5 2.5-2.5 2.5"/><line x1="9" y1="15" x2="9" y2="22"/><line x1="15" y1="15" x2="15" y2="22"/></svg>
+      </div>
+      <div class="al">Return Signs</div>
+      <div class="as">Mark signs returned</div>
+    </div>
+  </div>
+  <div class="sh"><div class="st">My Active Checkouts</div></div>
+  <div id="myCheckoutsList"></div>
+</div>
+
+<!-- LOCKBOXES -->
+<div class="page" id="pageLockboxes">
+  <div class="ft">
+    <div class="ftb active" onclick="filterLB('all',this)">All</div>
+    <div class="ftb" onclick="filterLB('available',this)">Available</div>
+    <div class="ftb" onclick="filterLB('checkedout',this)">Checked Out</div>
+  </div>
+  <div id="lockboxList"></div>
+</div>
+
+<!-- SIGNS -->
+<div class="page" id="pageSigns">
+  <div class="sh" style="padding-top:16px"><div class="st">My Signs</div></div>
+  <div id="mySignsList"></div>
+  <div class="sh"><div class="st">All Active Checkouts</div></div>
+  <div id="allSignsList"></div>
+  <div id="overdueSection">
+    <div class="sh"><div class="st" style="color:var(--red)">Overdue · 10+ Days</div></div>
+    <div id="overdueSignsList"></div>
+  </div>
+</div>
+
+<!-- AGENTS -->
+<div class="page" id="pageAgents">
+  <div class="sh" style="padding-top:16px"><div class="st">Team Directory</div><div class="sa" onclick="showAddAgentSheet()">+ Add</div></div>
+  <div id="agentList"></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="pageSettings">
+  <div class="sh" style="padding-top:20px"><div class="st">Settings</div></div>
+
+  <div class="sg">
+    <div class="sg-lbl">Account</div>
+    <div class="sr" onclick="showUserSheet()">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg></div><div class="s-lbl">Signed in as</div></div>
+      <div class="s-val" id="settingsUserName">—</div>
+    </div>
+    <div class="sr" onclick="switchUser()">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><path d="M17 16l4-4-4-4"/><path d="M21 12H9"/><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/></svg></div><div class="s-lbl">Switch User</div></div>
+      <div class="chev">›</div>
+    </div>
+  </div>
+
+  <div class="sg">
+    <div class="sg-lbl">Inventory</div>
+    <div class="sr" onclick="showAddLockboxSheet()">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><path d="M12 2C10 2 9 3.2 9 4.5C9 5.8 10.3 7 12 7C13.7 7 15 5.8 15 4.5C15 3.2 14 2 12 2Z"/><rect x="6" y="7" width="12" height="15" rx="2.5"/><circle cx="12" cy="13.5" r="1.5"/></svg></div><div class="s-lbl">Add Lockbox</div></div>
+      <div class="chev">›</div>
+    </div>
+    <div class="sr" onclick="showAddAgentSheet()">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4"/><path d="M2 20c0-4 3.6-7 8-7"/><path d="M19 11v6M22 14h-6"/></svg></div><div class="s-lbl">Add Agent</div></div>
+      <div class="chev">›</div>
+    </div>
+    <div class="sr" onclick="showInventorySheet()">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div><div class="s-lbl">Inventory Summary</div></div>
+      <div class="chev">›</div>
+    </div>
+  </div>
+
+  <div class="sg">
+    <div class="sg-lbl">History</div>
+    <div class="sr" onclick="showHistorySheet('all')">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></div><div class="s-lbl">All Activity</div></div>
+      <div class="chev">›</div>
+    </div>
+    <div class="sr" onclick="showHistorySheet('lockbox')">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><rect x="7" y="7" width="10" height="13" rx="2"/><path d="M10 7V5.5a2 2 0 0 1 4 0V7"/><circle cx="12" cy="13" r="1.2"/></svg></div><div class="s-lbl">Lockbox History</div></div>
+      <div class="chev">›</div>
+    </div>
+    <div class="sr" onclick="showHistorySheet('signs')">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="18" y2="6.5"/><line x1="6" y1="9.5" x2="15" y2="9.5"/><line x1="9" y1="15" x2="9" y2="19"/><line x1="15" y1="15" x2="15" y2="19"/></svg></div><div class="s-lbl">Sign History</div></div>
+      <div class="chev">›</div>
+    </div>
+    <div class="sr" onclick="clearHistory()">
+      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></div><div class="s-lbl" style="color:var(--red)">Clear All History</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV -->
+<nav class="nav">
+  <button class="ni active" onclick="navTo('pageHome',this)">
+    <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+    <span>Home</span>
+  </button>
+  <button class="ni" onclick="navTo('pageLockboxes',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C10 2 9 3.2 9 4.5C9 5.8 10.3 7 12 7C13.7 7 15 5.8 15 4.5C15 3.2 14 2 12 2Z"/><rect x="6" y="7" width="12" height="15" rx="2.5"/><circle cx="12" cy="13.5" r="1.5"/><path d="M12 15v2.5"/></svg>
+    <span>Lockboxes</span>
+  </button>
+  <button class="ni" onclick="navTo('pageSigns',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="18" y2="6.5"/><line x1="6" y1="9.5" x2="15" y2="9.5"/><line x1="6" y1="12" x2="11" y2="12"/><line x1="9" y1="15" x2="9" y2="22"/><line x1="15" y1="15" x2="15" y2="22"/></svg>
+    <span>Signs</span>
+  </button>
+  <button class="ni" onclick="navTo('pageAgents',this)">
+    <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    <span>Team</span>
+  </button>
+  <button class="ni" onclick="navTo('pageSettings',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span>Settings</span>
+  </button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<!-- ═══ SHEETS ═══ -->
+<!-- Checkout Lockbox -->
+<div class="ov" id="checkoutLockboxSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr"><div class="s-title">Check Out Lockbox</div><button class="s-close" onclick="closeSheet('checkoutLockboxSheet')">✕</button></div>
+    <div class="s-body">
+      <div class="field"><label>Agent</label><select id="coAgent"></select></div>
+      <div class="field"><label>Lockbox</label><select id="coLockbox"></select></div>
+      <div class="field"><label>Property Address</label><input type="text" id="coAddress" placeholder="123 Main St, Tacoma WA"></div>
+      <div class="tog-row">
+        <div><div class="tog-lbl">For Sale Sign</div><div class="tog-sub">Taking a for sale sign?</div></div>
+        <button class="toggle" id="coForSaleToggle" onclick="this.classList.toggle('on')"></button>
+      </div>
+      <button class="btn btn-p" onclick="submitCheckoutLockbox()">Confirm Checkout</button>
+    </div>
+  </div>
+</div>
+
+<!-- Lockbox Detail -->
+<div class="ov" id="lockboxDetailSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr"><div class="s-title" id="ldTitle">Lockbox</div><button class="s-close" onclick="closeSheet('lockboxDetailSheet')">✕</button></div>
+    <div class="d-info" id="ldInfo"></div>
+    <div class="d-act" id="ldActions"></div>
+  </div>
+</div>
+
+<!-- Checkout Signs -->
+<div class="ov" id="checkoutSignsSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr"><div class="s-title">Check Out Signs</div><button class="s-close" onclick="closeSheet('checkoutSignsSheet')">✕</button></div>
+    <div class="s-body">
+      <div class="field"><label>Agent</label><select id="csAgent"></select></div>
+      <div class="field"><label>Number of Signs</label><input type="number" id="csQuantity" placeholder="0" min="1"></div>
+      <button class="btn btn-p" onclick="submitCheckoutSigns()">Confirm Checkout</button>
+    </div>
+  </div>
+</div>
+
+<!-- Signs Detail -->
+<div class="ov" id="signsDetailSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr"><div class="s-title">Sign Checkout</div><button class="s-close" onclick="closeSheet('signsDetailSheet')">✕</button></div>
+    <div class="d-info" id="sdInfo"></div>
+    <div class="d-act" id="sdActions"></div>
+  </div>
+</div>
+
+<!-- Agent Profile -->
+<div class="ov" id="agentProfileSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="p-hero" id="agentHero"></div>
+    <div class="sh" style="padding-top:16px"><div class="st">Active Lockboxes</div></div>
+    <div id="agentLockboxes"></div>
+    <div class="sh"><div class="st">Active Signs</div></div>
+    <div id="agentSigns"></div>
+    <div style="padding:8px 16px 20px"><button class="btn btn-o" onclick="closeSheet('agentProfileSheet')">Close</button></div>
+  </div>
+</div>
+
+<!-- Add Agent -->
+<div class="ov" id="addAgentSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr"><div class="s-title">Add Agent</div><button class="s-close" onclick="closeSheet('addAgentSheet')">✕</button></div>
+    <div class="s-body">
+      <div class="field"><label>Full Name</label><input type="text" id="aaName" placeholder="Jane Smith"></div>
+      <div class="field"><label>Phone Number</label><input type="tel" id="aaPhone" placeholder="(253) 000-0000"></div>
+      <button class="btn btn-p" onclick="submitAddAgent()">Add Agent</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Lockbox -->
+<div class="ov" id="addLockboxSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr"><div class="s-title">Add Lockbox</div><button class="s-close" onclick="closeSheet('addLockboxSheet')">✕</button></div>
+    <div class="s-body">
+      <div class="field"><label>Lockbox Number</label><input type="text" id="alNumber" placeholder="LB-009"></div>
+      <button class="btn btn-p" onclick="submitAddLockbox()">Add Lockbox</button>
+    </div>
+  </div>
+</div>
+
+<!-- User Sheet -->
+<div class="ov" id="userSheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr"><div class="s-title">My Account</div><button class="s-close" onclick="closeSheet('userSheet')">✕</button></div>
+    <div class="s-body">
+      <div style="text-align:center;padding:10px 0 24px">
+        <div class="avatar lg" style="margin:0 auto 12px" id="userSheetAvatar"></div>
+        <div style="font-size:19px;font-weight:600" id="userSheetName"></div>
+        <div style="font-size:13px;color:var(--silver2);margin-top:4px" id="userSheetPhone"></div>
+      </div>
+      <button class="btn btn-o" onclick="switchUser()">Switch User</button>
+    </div>
+  </div>
+</div>
+
+<!-- History Sheet -->
+<div class="ov" id="historySheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr"><div class="s-title" id="historySheetTitle">Activity History</div><button class="s-close" onclick="closeSheet('historySheet')">✕</button></div>
+    <div style="padding:12px 16px 20px"><div class="card" style="margin:0"><div id="historyList"></div></div></div>
+  </div>
+</div>
+
+<!-- Inventory Sheet -->
+<div class="ov" id="inventorySheet">
+  <div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr"><div class="s-title">Inventory Summary</div><button class="s-close" onclick="closeSheet('inventorySheet')">✕</button></div>
+    <div style="padding:12px 16px 20px"><div class="card" style="margin:0" id="inventoryDetail"></div></div>
+  </div>
+</div>
+
+<script>
+// DATA
+const DA=[{id:'a1',name:'Skylar M.',phone:'(253) 722-3926'},{id:'a2',name:'Jamie Rodriguez',phone:'(253) 555-0102'},{id:'a3',name:'Dana Kim',phone:'(253) 555-0103'},{id:'a4',name:'Marcus Reed',phone:'(253) 555-0104'}];
+const DL=['LB-001','LB-002','LB-003','LB-004','LB-005','LB-006','LB-007','LB-008'].map((n,i)=>({id:'lb'+(i+1),number:n,agent:null,address:null,dateCheckedOut:null,forSaleSign:false,status:'available'}));
+
+const ga=()=>JSON.parse(localStorage.getItem('prec_agents')||JSON.stringify(DA));
+const gl=()=>JSON.parse(localStorage.getItem('prec_lockboxes')||JSON.stringify(DL));
+const gs=()=>JSON.parse(localStorage.getItem('prec_signs')||'[]');
+const gh=()=>JSON.parse(localStorage.getItem('prec_history')||'[]');
+const gu=()=>JSON.parse(localStorage.getItem('prec_user')||'null');
+const sa=d=>localStorage.setItem('prec_agents',JSON.stringify(d));
+const sl=d=>localStorage.setItem('prec_lockboxes',JSON.stringify(d));
+const ss=d=>localStorage.setItem('prec_signs',JSON.stringify(d));
+const sh2=d=>localStorage.setItem('prec_history',JSON.stringify(d));
+const su=d=>localStorage.setItem('prec_user',JSON.stringify(d));
+
+function addHist(type,action,detail,agent){const h=gh();h.unshift({id:uid(),type,action,detail,agent,timestamp:new Date().toISOString()});if(h.length>200)h.splice(200);sh2(h);}
+function initData(){if(!localStorage.getItem('prec_agents'))sa(DA);if(!localStorage.getItem('prec_lockboxes'))sl(DL);}
+
+// UTILS
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+const tod=()=>new Date().toISOString().split('T')[0];
+const dsi=d=>d?Math.floor((new Date()-new Date(d))/(86400000)):0;
+const fmtD=d=>d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
+const fmtT=ts=>{const d=new Date(ts),n=new Date(),df=Math.floor((n-d)/1000);if(df<60)return'just now';if(df<3600)return Math.floor(df/60)+'m ago';if(df<86400)return Math.floor(df/3600)+'h ago';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});};
+function uid(){return's'+Math.random().toString(36).slice(2,9);}
+
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
+function openSheet(id){document.getElementById(id).classList.add('open');}
+function closeSheet(id){document.getElementById(id).classList.remove('open');}
+
+function navTo(pageId,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  else{const m={pageHome:0,pageLockboxes:1,pageSigns:2,pageAgents:3,pageSettings:4};const i=m[pageId];if(i!==undefined)document.querySelectorAll('.ni')[i].classList.add('active');}
+  renderAll();
+}
+
+// SETUP
+function showSetup(){
+  const sel=document.getElementById('setupAgent');
+  sel.innerHTML='<option value="">Select agent...</option>';
+  ga().forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=a.name;sel.appendChild(o);});
+  document.getElementById('setupScreen').classList.add('open');
+}
+function completeSetup(){
+  const id=document.getElementById('setupAgent').value;
+  if(!id){showToast('Please select your name');return;}
+  const agents=ga(),agent=agents.find(a=>a.id===id);
+  const phone=document.getElementById('setupPhone').value;
+  if(phone){agent.phone=phone;sa(agents);}
+  su(agent);document.getElementById('setupScreen').classList.remove('open');
+  updateHeader();renderAll();
+}
+function switchUser(){closeSheet('userSheet');su(null);showSetup();}
+function updateHeader(){
+  const user=gu();
+  const av=document.getElementById('headerAvatar');
+  const gn=document.getElementById('greetingName');
+  const sn=document.getElementById('settingsUserName');
+  if(user){av.textContent=ini(user.name);const p=user.name.split(' ');gn.innerHTML=p[0]+' <span>'+(p[1]||'')+'</span>';if(sn)sn.textContent=user.name;}
+}
+function showUserSheet(){
+  const user=gu();if(!user)return;
+  document.getElementById('userSheetAvatar').textContent=ini(user.name);
+  document.getElementById('userSheetName').textContent=user.name;
+  document.getElementById('userSheetPhone').textContent=user.phone||'';
+  openSheet('userSheet');
+}
+
+// ICONS
+function lbIcon(status){
+  return`<div class="ii ${status==='available'?'bright':'dim'}"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C10 2 9 3.2 9 4.5C9 5.8 10.3 7 12 7C13.7 7 15 5.8 15 4.5C15 3.2 14 2 12 2Z"/><rect x="6" y="7" width="12" height="15" rx="2.5"/><circle cx="12" cy="13.5" r="1.5"/><path d="M12 15v2.5"/></svg></div>`;
+}
+function sgIcon(){
+  return`<div class="ii bright"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="18" y2="6.5"/><line x1="6" y1="9.5" x2="15" y2="9.5"/><line x1="6" y1="12" x2="11" y2="12"/><line x1="9" y1="15" x2="9" y2="22"/><line x1="15" y1="15" x2="15" y2="22"/></svg></div>`;
+}
+
+// LOCKBOXES
+let lbFilter='all';
+function filterLB(f,el){lbFilter=f;document.querySelectorAll('.ftb').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderLockboxes();}
+
+function renderLockboxes(){
+  const list=document.getElementById('lockboxList');
+  let boxes=gl();
+  if(lbFilter==='available')boxes=boxes.filter(b=>b.status==='available');
+  if(lbFilter==='checkedout')boxes=boxes.filter(b=>b.status==='checkedout');
+  boxes.sort((a,b)=>a.status===b.status?a.number.localeCompare(b.number):a.status==='available'?-1:1);
+  if(!boxes.length){list.innerHTML='<div class="empty"><div class="empty-icon">🔒</div><div class="empty-text">No lockboxes found</div></div>';return;}
+  const card=document.createElement('div');card.className='card';card.style.margin='0 16px 10px';
+  card.innerHTML=boxes.map(b=>{
+    const pill=b.status==='available'?'<span class="pill p-avail">Available</span>':'<span class="pill p-out">Out</span>';
+    const days=b.dateCheckedOut?dsi(b.dateCheckedOut):null;
+    const badge=days!==null?`<span class="badge${days>9?' over':days>6?' warn':''}">${days}d</span>`:'';
+    return`<div class="cr" onclick="showLockboxDetail('${b.id}')">${lbIcon(b.status)}<div class="ci"><div class="ct">${b.number}</div><div class="cs">${b.agent||'Available'}</div>${b.address?`<div class="cm">${b.address}</div>`:''}</div><div class="crt">${pill}${badge}</div></div>`;
+  }).join('');
+  list.innerHTML='';list.appendChild(card);
+  const ab=document.createElement('div');ab.style.cssText='padding:0 16px 16px';
+  ab.innerHTML='<button class="btn btn-o" onclick="showAddLockboxSheet()">+ Add Lockbox</button>';
+  list.appendChild(ab);
+}
+
+function showLockboxDetail(id){
+  const b=gl().find(x=>x.id===id);if(!b)return;
+  document.getElementById('ldTitle').textContent=b.number;
+  document.getElementById('ldInfo').innerHTML=`
+    <div class="ir"><div class="il">Status</div><div class="iv">${b.status==='available'?'✅ Available':'🔑 Checked Out'}</div></div>
+    <div class="ir"><div class="il">Agent</div><div class="iv">${b.agent||'—'}</div></div>
+    <div class="ir"><div class="il">Address</div><div class="iv">${b.address||'—'}</div></div>
+    <div class="ir"><div class="il">Date Out</div><div class="iv">${fmtD(b.dateCheckedOut)}</div></div>
+    <div class="ir"><div class="il">For Sale Sign</div><div class="iv">${b.forSaleSign?'✅ Yes':'No'}</div></div>
+    ${b.dateCheckedOut?`<div class="ir"><div class="il">Days Out</div><div class="iv">${dsi(b.dateCheckedOut)} days</div></div>`:''}
+  `;
+  document.getElementById('ldActions').innerHTML=b.status==='available'
+    ?`<button class="btn btn-p" onclick="closeSheet('lockboxDetailSheet');showCheckoutLockboxSheet('${id}')">Check Out This Lockbox</button>`
+    :`<button class="btn btn-d" onclick="returnLockbox('${id}')">Return Lockbox</button>`;
+  openSheet('lockboxDetailSheet');
+}
+
+function showCheckoutLockboxSheet(preId){
+  const agents=ga(),boxes=gl().filter(b=>b.status==='available'),user=gu();
+  document.getElementById('coAgent').innerHTML=agents.map(a=>`<option value="${a.id}" ${user&&user.id===a.id?'selected':''}>${a.name}</option>`).join('');
+  document.getElementById('coLockbox').innerHTML=!boxes.length?'<option>No lockboxes available</option>':boxes.map(b=>`<option value="${b.id}" ${b.id===preId?'selected':''}>${b.number}</option>`).join('');
+  document.getElementById('coAddress').value='';
+  document.getElementById('coForSaleToggle').classList.remove('on');
+  openSheet('checkoutLockboxSheet');
+}
+
+function submitCheckoutLockbox(){
+  const agentId=document.getElementById('coAgent').value,lbId=document.getElementById('coLockbox').value;
+  const address=document.getElementById('coAddress').value.trim();
+  const forSale=document.getElementById('coForSaleToggle').classList.contains('on');
+  if(!address){showToast('Please enter a property address');return;}
+  const agents=ga(),agent=agents.find(a=>a.id===agentId);
+  const boxes=gl(),idx=boxes.findIndex(b=>b.id===lbId);if(idx===-1)return;
+  boxes[idx]={...boxes[idx],status:'checkedout',agent:agent.name,address,dateCheckedOut:tod(),forSaleSign:forSale};
+  sl(boxes);addHist('lockbox','checkout',`${boxes[idx].number} — ${address}`,agent.name);
+  closeSheet('checkoutLockboxSheet');showToast(`✅ ${boxes[idx].number} checked out`);renderAll();
+}
+
+function returnLockbox(id){
+  const boxes=gl(),idx=boxes.findIndex(b=>b.id===id);if(idx===-1)return;
+  const num=boxes[idx].number,agent=boxes[idx].agent;
+  addHist('lockbox','return',`${num} returned`,agent);
+  boxes[idx]={...boxes[idx],status:'available',agent:null,address:null,dateCheckedOut:null,forSaleSign:false};
+  sl(boxes);closeSheet('lockboxDetailSheet');showToast(`🔓 ${num} returned`);renderAll();
+}
+
+function showAddLockboxSheet(){document.getElementById('alNumber').value='';openSheet('addLockboxSheet');}
+function submitAddLockbox(){
+  const num=document.getElementById('alNumber').value.trim();
+  if(!num){showToast('Please enter a lockbox number');return;}
+  const boxes=gl();if(boxes.find(b=>b.number===num)){showToast('Lockbox already exists');return;}
+  boxes.push({id:uid(),number:num,agent:null,address:null,dateCheckedOut:null,forSaleSign:false,status:'available'});
+  sl(boxes);closeSheet('addLockboxSheet');showToast(`✅ ${num} added`);renderAll();
+}
+
+// SIGNS
+function renderSigns(){
+  const user=gu();
+  const signs=gs().filter(s=>s.status==='checkedout');
+  signs.sort((a,b)=>new Date(a.dateCheckedOut)-new Date(b.dateCheckedOut));
+  const overdue=signs.filter(s=>dsi(s.dateCheckedOut)>=10);
+  const active=signs.filter(s=>dsi(s.dateCheckedOut)<10);
+  const mine=user?active.filter(s=>s.agent===user.name):[];
+  const others=active.filter(s=>!user||s.agent!==user.name);
+
+  const myList=document.getElementById('mySignsList');
+  if(!mine.length){myList.innerHTML='<div class="empty" style="padding:20px"><div class="empty-text">You have no active sign checkouts</div></div>';}
+  else{const c=document.createElement('div');c.className='card';c.style.margin='0 16px 10px';c.innerHTML=mine.map(s=>signRow(s)).join('');myList.innerHTML='';myList.appendChild(c);}
+
+  const allList=document.getElementById('allSignsList');
+  const allActive=[...mine,...others];
+  if(!allActive.length){allList.innerHTML='<div class="empty" style="padding:20px"><div class="empty-text">No active sign checkouts</div></div>';}
+  else{const c=document.createElement('div');c.className='card';c.style.margin='0 16px 10px';c.innerHTML=allActive.map(s=>signRow(s)).join('');allList.innerHTML='';allList.appendChild(c);}
+
+  const odSec=document.getElementById('overdueSection');
+  const odList=document.getElementById('overdueSignsList');
+  if(!overdue.length){odSec.style.display='none';}
+  else{odSec.style.display='block';const c=document.createElement('div');c.className='card';c.style.margin='0 16px 10px';c.innerHTML=overdue.map(s=>signRow(s,true)).join('');odList.innerHTML='';odList.appendChild(c);}
+}
+
+function signRow(s,overdue){
+  const days=dsi(s.dateCheckedOut);
+  const pill=overdue?'<span class="pill p-over">Overdue</span>':'<span class="pill p-out">Out</span>';
+  const badge=`<span class="badge${overdue?' over':days>6?' warn':''}">${days}d</span>`;
+  return`<div class="cr" onclick="showSignDetail('${s.id}')">${sgIcon()}<div class="ci"><div class="ct">${s.agent}</div><div class="cs">${s.quantity} sign${s.quantity!==1?'s':''} checked out</div><div class="cm">Since ${fmtD(s.dateCheckedOut)}</div></div><div class="crt">${pill}${badge}</div></div>`;
+}
+
+function showSignDetail(id){
+  const s=gs().find(x=>x.id===id);if(!s)return;
+  const days=dsi(s.dateCheckedOut);
+  document.getElementById('sdInfo').innerHTML=`
+    <div class="ir"><div class="il">Agent</div><div class="iv">${s.agent}</div></div>
+    <div class="ir"><div class="il">Quantity</div><div class="iv">${s.quantity} sign${s.quantity!==1?'s':''}</div></div>
+    <div class="ir"><div class="il">Date Out</div><div class="iv">${fmtD(s.dateCheckedOut)}</div></div>
+    <div class="ir"><div class="il">Days Out</div><div class="iv">${days} day${days!==1?'s':''}${days>=10?' ⚠️ Overdue':''}</div></div>
+  `;
+  document.getElementById('sdActions').innerHTML=s.status==='checkedout'?`<button class="btn btn-d" onclick="returnSigns('${id}')">Return ${s.quantity} Sign${s.quantity!==1?'s':''}</button>`:'';
+  openSheet('signsDetailSheet');
+}
+
+function showCheckoutSignsSheet(){
+  const agents=ga(),user=gu();
+  document.getElementById('csAgent').innerHTML=agents.map(a=>`<option value="${a.name}" ${user&&user.name===a.name?'selected':''}>${a.name}</option>`).join('');
+  document.getElementById('csQuantity').value='';openSheet('checkoutSignsSheet');
+}
+function submitCheckoutSigns(){
+  const agent=document.getElementById('csAgent').value,qty=parseInt(document.getElementById('csQuantity').value);
+  if(!qty||qty<1){showToast('Please enter a valid quantity');return;}
+  const signs=gs();signs.push({id:uid(),agent,quantity:qty,dateCheckedOut:tod(),dateReturned:null,status:'checkedout'});
+  ss(signs);addHist('signs','checkout',`${qty} sign${qty!==1?'s':''} taken`,agent);
+  closeSheet('checkoutSignsSheet');showToast(`✅ ${qty} sign${qty!==1?'s':''} checked out`);renderAll();
+}
+function returnSigns(id){
+  const signs=gs(),idx=signs.findIndex(s=>s.id===id);if(idx===-1)return;
+  const qty=signs[idx].quantity,agent=signs[idx].agent;
+  addHist('signs','return',`${qty} sign${qty!==1?'s':''} returned`,agent);
+  signs[idx].status='returned';signs[idx].dateReturned=tod();
+  ss(signs);closeSheet('signsDetailSheet');showToast(`✅ ${qty} sign${qty!==1?'s':''} returned`);renderAll();
+}
+
+// AGENTS
+function renderAgents(){
+  const agents=ga(),list=document.getElementById('agentList');
+  if(!agents.length){list.innerHTML='<div class="empty"><div class="empty-icon">👤</div><div class="empty-text">No agents added yet</div></div>';return;}
+  const card=document.createElement('div');card.className='card';card.style.margin='0 16px 16px';
+  card.innerHTML=agents.map(a=>{
+    const boxes=gl().filter(b=>b.agent===a.name&&b.status==='checkedout');
+    const signs=gs().filter(s=>s.agent===a.name&&s.status==='checkedout');
+    const total=signs.reduce((sum,s)=>sum+s.quantity,0);
+    const summary=[boxes.length?`${boxes.length} lockbox${boxes.length!==1?'es':''}`:'',(total?`${total} sign${total!==1?'s':''}`:'')] .filter(Boolean).join(' · ')||'Nothing checked out';
+    return`<div class="cr" onclick="showAgentProfile('${a.id}')"><div class="avatar" style="width:42px;height:42px;font-size:13px;flex-shrink:0;border-radius:50%;background:var(--bg4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--silver)">${ini(a.name)}</div><div class="ci"><div class="ct">${a.name}</div><div class="cs">${summary}</div><div class="cm">${a.phone||''}</div></div><div class="chev">›</div></div>`;
+  }).join('');
+  list.innerHTML='';list.appendChild(card);
+}
+
+function showAgentProfile(id){
+  const a=ga().find(x=>x.id===id);if(!a)return;
+  document.getElementById('agentHero').innerHTML=`<div class="avatar lg">${ini(a.name)}</div><div><div class="p-name">${a.name}</div><div class="p-phone">${a.phone||'No phone on file'}</div></div>`;
+  const boxes=gl().filter(b=>b.agent===a.name&&b.status==='checkedout');
+  const lbDiv=document.getElementById('agentLockboxes');
+  if(!boxes.length){lbDiv.innerHTML='<div class="empty" style="padding:16px 20px"><div class="empty-text">No lockboxes checked out</div></div>';}
+  else{const c=document.createElement('div');c.className='card';c.style.margin='0 16px 8px';c.innerHTML=boxes.map(b=>`<div class="cr">${lbIcon(b.status)}<div class="ci"><div class="ct">${b.number}</div><div class="cs">${b.address||'No address'}</div><div class="cm">Since ${fmtD(b.dateCheckedOut)} · ${dsi(b.dateCheckedOut)} days</div></div>${b.forSaleSign?'<span class="pill p-out">+Sign</span>':''}</div>`).join('');lbDiv.innerHTML='';lbDiv.appendChild(c);}
+  const signs=gs().filter(s=>s.agent===a.name&&s.status==='checkedout');
+  const sgDiv=document.getElementById('agentSigns');
+  if(!signs.length){sgDiv.innerHTML='<div class="empty" style="padding:16px 20px"><div class="empty-text">No signs checked out</div></div>';}
+  else{const c=document.createElement('div');c.className='card';c.style.margin='0 16px 8px';c.innerHTML=signs.map(s=>{const d=dsi(s.dateCheckedOut);return`<div class="cr">${sgIcon()}<div class="ci"><div class="ct">${s.quantity} sign${s.quantity!==1?'s':''}</div><div class="cs">Since ${fmtD(s.dateCheckedOut)}</div></div><span class="badge${d>=10?' over':d>6?' warn':''}">${d}d</span></div>`;}).join('');sgDiv.innerHTML='';sgDiv.appendChild(c);}
+  openSheet('agentProfileSheet');
+}
+
+function showAddAgentSheet(){document.getElementById('aaName').value='';document.getElementById('aaPhone').value='';openSheet('addAgentSheet');}
+function submitAddAgent(){
+  const name=document.getElementById('aaName').value.trim(),phone=document.getElementById('aaPhone').value.trim();
+  if(!name){showToast('Please enter a name');return;}
+  const agents=ga();agents.push({id:uid(),name,phone});sa(agents);
+  closeSheet('addAgentSheet');showToast(`✅ ${name} added`);renderAll();
+}
+
+// HOME
+function renderHome(){
+  const user=gu();if(!user)return;
+  const boxes=gl().filter(b=>b.agent===user.name&&b.status==='checkedout');
+  const signs=gs().filter(s=>s.agent===user.name&&s.status==='checkedout');
+  const all=[...boxes.map(b=>({type:'lockbox',label:b.number,sub:b.address||'No address',days:dsi(b.dateCheckedOut),id:b.id})),...signs.map(s=>({type:'signs',label:`${s.quantity} Sign${s.quantity!==1?'s':''}`,sub:`Since ${fmtD(s.dateCheckedOut)}`,days:dsi(s.dateCheckedOut),id:s.id}))];
+  const list=document.getElementById('myCheckoutsList');
+  if(!all.length){list.innerHTML='<div class="empty"><div class="empty-icon">✅</div><div class="empty-text">Nothing checked out</div></div>';return;}
+  const card=document.createElement('div');card.className='card';card.style.margin='0 16px 16px';
+  card.innerHTML=all.map(item=>`<div class="cr" onclick="${item.type==='lockbox'?`showLockboxDetail('${item.id}')`:`showSignDetail('${item.id}')`}">${item.type==='lockbox'?lbIcon('checkedout'):sgIcon()}<div class="ci"><div class="ct">${item.label}</div><div class="cs">${item.sub}</div></div><span class="badge${item.days>=10?' over':item.days>6?' warn':''}">${item.days}d</span></div>`).join('');
+  list.innerHTML='';list.appendChild(card);
+}
+
+// HISTORY
+function showHistorySheet(filter){
+  let hist=gh();
+  const titles={all:'All Activity',lockbox:'Lockbox History',signs:'Sign History'};
+  document.getElementById('historySheetTitle').textContent=titles[filter]||'History';
+  if(filter!=='all')hist=hist.filter(h=>h.type===filter);
+  const listEl=document.getElementById('historyList');
+  if(!hist.length){listEl.innerHTML='<div class="empty" style="padding:24px"><div class="empty-text">No history yet</div></div>';}
+  else{listEl.innerHTML=hist.map(h=>`<div class="hi"><div class="h-dot ${h.action==='checkout'?'co':'re'}"></div><div class="h-info"><div class="h-title">${h.detail}</div><div class="h-sub">${h.agent} · ${h.action==='checkout'?'Checked out':'Returned'}</div></div><div class="h-time">${fmtT(h.timestamp)}</div></div>`).join('');}
+  openSheet('historySheet');
+}
+function clearHistory(){if(!confirm('Clear all activity history?'))return;sh2([]);showToast('History cleared');}
+
+// INVENTORY
+function showInventorySheet(){
+  const boxes=gl(),signs=gs();
+  const avail=boxes.filter(b=>b.status==='available').length;
+  const out=boxes.filter(b=>b.status==='checkedout').length;
+  const signsOut=signs.filter(s=>s.status==='checkedout').reduce((sum,s)=>sum+s.quantity,0);
+  const overdue=signs.filter(s=>s.status==='checkedout'&&dsi(s.dateCheckedOut)>=10).length;
+  document.getElementById('inventoryDetail').innerHTML=`
+    <div class="cr"><div class="ci"><div class="ct">Total Lockboxes</div></div><div class="ct">${boxes.length}</div></div>
+    <div class="cr"><div class="ci"><div class="ct">Lockboxes Available</div></div><div class="ct" style="color:var(--green)">${avail}</div></div>
+    <div class="cr"><div class="ci"><div class="ct">Lockboxes Checked Out</div></div><div class="ct">${out}</div></div>
+    <div class="cr"><div class="ci"><div class="ct">Signs Currently Out</div></div><div class="ct">${signsOut}</div></div>
+    <div class="cr" style="border-bottom:none"><div class="ci"><div class="ct">Overdue Sign Checkouts</div></div><div class="ct" style="color:${overdue?'var(--red)':'var(--green)'}">${overdue}</div></div>
+  `;
+  openSheet('inventorySheet');
+}
+
+function renderAll(){renderHome();renderLockboxes();renderSigns();renderAgents();updateHeader();}
+
+window.addEventListener('load',()=>{initData();const user=gu();if(!user)showSetup();else{updateHeader();renderAll();}});
+document.querySelectorAll('.ov').forEach(ov=>ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');}));
+</script>
+</body>
+</html>

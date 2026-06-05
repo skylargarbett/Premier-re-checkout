@@ -202,8 +202,8 @@
   .setup-field select option{background:#1c1c1e}
   .btn-setup{width:100%;padding:15px;border-radius:var(--radius);border:none;font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;background:#fff;color:#000;margin-top:4px}
 </style>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -218,13 +218,31 @@
       <label>Your Name</label>
       <select id="setupAgent" onchange="handleSetupChange()"><option value="">Loading agents...</option></select>
       <div id="pinField" style="display:none">
-        <label>Admin PIN</label>
-        <input type="password" id="setupPin" placeholder="••••" maxlength="6" inputmode="numeric">
+        <label id="pinFieldLabel">PIN</label>
+        <input type="password" id="setupPin" placeholder="••••" maxlength="4" inputmode="numeric">
       </div>
     </div>
     <div id="setupError" style="display:none;font-size:13px;color:var(--red);margin-bottom:12px;text-align:center"></div>
     <button class="btn-setup" onclick="completeSetup()">Sign In →</button>
     <p style="font-size:11px;color:rgba(255,255,255,0.25);text-align:center;margin-top:16px">Your name must be on the team roster.<br>Contact your admin if you're not listed.</p>
+  </div>
+</div>
+
+<!-- CREATE PIN SCREEN -->
+<div class="setup" id="createPinScreen">
+  <div class="setup-logo">Premier<span>RE</span></div>
+  <div class="setup-sub">Team Equipment Checkout</div>
+  <div class="setup-card">
+    <h2>Create Your PIN</h2>
+    <p>Set a 4-digit PIN you'll use to sign in going forward</p>
+    <div class="setup-field">
+      <label>New PIN</label>
+      <input type="password" id="newPin" placeholder="••••" maxlength="4" inputmode="numeric">
+      <label>Confirm PIN</label>
+      <input type="password" id="confirmPin" placeholder="••••" maxlength="4" inputmode="numeric">
+    </div>
+    <div id="createPinError" style="display:none;font-size:13px;color:var(--red);margin-bottom:12px;text-align:center"></div>
+    <button class="btn-setup" onclick="submitCreatePin()">Set PIN →</button>
   </div>
 </div>
 
@@ -278,7 +296,7 @@
   </div>
   <div class="sh" style="padding-top:4px"><div class="st">Quick Actions</div></div>
   <div class="ag">
-    <div class="ac" onclick="showCheckoutLockboxSheet()">
+    <div class="ac" onclick="navTo('pageLockboxes');setTimeout(()=>showCheckoutLockboxSheet(),50)">
       <div class="ai">
         <!-- Door-hanger lockbox: loop hook + body + keyhole -->
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C10 2 9 3.2 9 4.5C9 5.8 10.3 7 12 7C13.7 7 15 5.8 15 4.5C15 3.2 14 2 12 2Z"/><rect x="6" y="7" width="12" height="15" rx="2.5"/><circle cx="12" cy="13.5" r="1.5"/><path d="M12 15v2.5"/></svg>
@@ -292,20 +310,20 @@
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4.5C15 3.2 14 2 12 2C10 2 9 3.2 9 4.5V7"/><path d="M9 7H6"/><rect x="6" y="7" width="12" height="15" rx="2.5"/><circle cx="12" cy="13.5" r="1.5"/><path d="M12 15v2.5"/></svg>
       </div>
       <div class="al">Return Lockbox</div>
-      <div class="as">Mark as returned</div>
+      <div class="as">View your active checkouts</div>
     </div>
     <div class="ac" onclick="showCheckoutSignsSheet()">
       <div class="ai">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="18" y2="6.5"/><line x1="6" y1="9.5" x2="15" y2="9.5"/><line x1="6" y1="12" x2="11" y2="12"/><line x1="9" y1="15" x2="9" y2="22"/><line x1="15" y1="15" x2="15" y2="22"/></svg>
       </div>
-      <div class="al">Check Out Open House Signs</div>
+      <div class="al">Open House Signs</div>
       <div class="as">Log signs taken</div>
     </div>
     <div class="ac" onclick="navTo('pageSigns')">
       <div class="ai">
         <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="14" y2="6.5"/><line x1="6" y1="9.5" x2="12" y2="9.5"/><path d="M16 6l2.5 2.5-2.5 2.5"/><line x1="9" y1="15" x2="9" y2="22"/><line x1="15" y1="15" x2="15" y2="22"/></svg>
       </div>
-      <div class="al">Return Open House Signs</div>
+      <div class="al">Return Signs</div>
       <div class="as">Mark signs returned</div>
     </div>
   </div>
@@ -318,12 +336,19 @@
 
 <!-- LOCKBOXES -->
 <div class="page" id="pageLockboxes">
+  <div class="sh" style="padding-top:16px"><div class="st">My Lockboxes</div></div>
+  <div id="myLockboxList"></div>
+  <div class="sh"><div class="st">All Lockboxes</div></div>
   <div class="ft">
     <div class="ftb active" onclick="filterLB('all',this)">All</div>
     <div class="ftb" onclick="filterLB('available',this)">Available</div>
     <div class="ftb" onclick="filterLB('checkedout',this)">Checked Out</div>
   </div>
   <div id="lockboxList"></div>
+  <!-- Floating checkout button -->
+  <div style="position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:398px;z-index:50">
+    <button onclick="showCheckoutLockboxSheet()" style="width:100%;padding:15px;background:var(--silver);color:#000;border:none;border-radius:var(--radius);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.4)">Check Out</button>
+  </div>
 </div>
 
 <!-- SIGNS -->
@@ -336,11 +361,15 @@
     <div class="sh"><div class="st" style="color:var(--red)">Overdue · 10+ Days</div></div>
     <div id="overdueSignsList"></div>
   </div>
+  <!-- Floating checkout button -->
+  <div style="position:fixed;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 12px);left:50%;transform:translateX(-50%);width:calc(100% - 32px);max-width:398px;z-index:50">
+    <button onclick="showCheckoutSignsSheet()" style="width:100%;padding:15px;background:var(--silver);color:#000;border:none;border-radius:var(--radius);font-size:15px;font-weight:600;font-family:'DM Sans',sans-serif;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,0.4)">Check Out</button>
+  </div>
 </div>
 
 <!-- AGENTS -->
 <div class="page" id="pageAgents">
-  <div class="sh" style="padding-top:16px"><div class="st">Team Directory</div><div class="sa" onclick="showAddAgentSheet()">+ Add</div></div>
+  <div class="sh" style="padding-top:16px"><div class="st">Team Directory</div><div class="sa" id="addAgentBtn" onclick="showAddAgentSheet()" style="display:none">+ Add</div></div>
   <div id="agentList"></div>
 </div>
 
@@ -362,14 +391,6 @@
 
   <div class="sg">
     <div class="sg-lbl">Inventory</div>
-    <div class="sr" onclick="showAddLockboxSheet()">
-      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><path d="M12 2C10 2 9 3.2 9 4.5C9 5.8 10.3 7 12 7C13.7 7 15 5.8 15 4.5C15 3.2 14 2 12 2Z"/><rect x="6" y="7" width="12" height="15" rx="2.5"/><circle cx="12" cy="13.5" r="1.5"/></svg></div><div class="s-lbl">Add Lockbox</div></div>
-      <div class="chev">›</div>
-    </div>
-    <div class="sr" onclick="showAddAgentSheet()">
-      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="4"/><path d="M2 20c0-4 3.6-7 8-7"/><path d="M19 11v6M22 14h-6"/></svg></div><div class="s-lbl">Add Agent</div></div>
-      <div class="chev">›</div>
-    </div>
     <div class="sr" onclick="showInventorySheet()">
       <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div><div class="s-lbl">Inventory Summary</div></div>
       <div class="chev">›</div>
@@ -388,13 +409,6 @@
     </div>
     <div class="sr" onclick="showHistorySheet('signs')">
       <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="18" y2="6.5"/><line x1="6" y1="9.5" x2="15" y2="9.5"/><line x1="9" y1="15" x2="9" y2="19"/><line x1="15" y1="15" x2="15" y2="19"/></svg></div><div class="s-lbl">Sign History</div></div>
-      <div class="chev">›</div>
-    </div>
-    <div class="sr" id="clearHistoryRow" onclick="clearHistory()" style="display:none">
-      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></div><div class="s-lbl" style="color:var(--red)">Clear All History</div></div>
-    </div>
-    <div class="sr" id="adminMgmtRow" onclick="requireAdmin(showAdminMgmt)" style="display:none">
-      <div class="sr-l"><div class="s-ico"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div><div class="s-lbl">Manage Admins</div></div>
       <div class="chev">›</div>
     </div>
   </div>
@@ -424,6 +438,17 @@
     </div>
   </div>
   <div id="adminLockboxList"></div>
+
+  <div class="sg">
+    <div class="sg-lbl">Open House Signs</div>
+    <div class="sr" onclick="showOHSignsAdmin()">
+      <div class="sr-l">
+        <div class="s-ico"><svg viewBox="0 0 24 24"><rect x="2" y="2" width="20" height="13" rx="2"/><line x1="6" y1="6.5" x2="18" y2="6.5"/><line x1="6" y1="9.5" x2="15" y2="9.5"/><line x1="9" y1="15" x2="9" y2="21"/><line x1="15" y1="15" x2="15" y2="21"/></svg></div>
+        <div><div class="s-lbl">Manage Sign Inventory</div><div style="font-size:11px;color:var(--silver2);margin-top:2px" id="ohSignsAdminSub">Tap to adjust total</div></div>
+      </div>
+      <div class="chev">›</div>
+    </div>
+  </div>
 
   <div class="sg">
     <div class="sg-lbl">History</div>
@@ -505,10 +530,11 @@
 <!-- Checkout Signs -->
 <div class="ov" id="checkoutSignsSheet">
   <div class="sheet"><div class="s-handle"></div>
-    <div class="s-hdr"><div class="s-title">Check Out Open House Signs</div><button class="s-close" onclick="closeSheet('checkoutSignsSheet')">✕</button></div>
+    <div class="s-hdr"><div class="s-title">Open House Signs</div><button class="s-close" onclick="closeSheet('checkoutSignsSheet')">✕</button></div>
     <div class="s-body">
       <div class="field"><label>Agent</label><select id="csAgent"></select></div>
       <div class="field"><label>Number of Signs</label><input type="number" id="csQuantity" placeholder="0" min="1"></div>
+      <div class="field"><label>Other</label><input type="text" id="csOther" placeholder="e.g. 2 A-frames, 3 flags..."></div>
       <button class="btn btn-p" onclick="submitCheckoutSigns()">Confirm Checkout</button>
     </div>
   </div>
@@ -542,6 +568,7 @@
     <div class="s-body">
       <div class="field"><label>Full Name</label><input type="text" id="aaName" placeholder="Jane Smith"></div>
       <div class="field"><label>Phone Number</label><input type="tel" id="aaPhone" placeholder="(253) 000-0000"></div>
+      <div class="field"><label>Temporary PIN</label><input type="password" id="aaPin" placeholder="4-digit PIN" maxlength="4" inputmode="numeric"><div style="font-size:11px;color:var(--silver2);margin-top:5px">Agent will be prompted to create their own PIN on first sign in</div></div>
       <button class="btn btn-p" onclick="submitAddAgent()">Add Agent</button>
     </div>
   </div>
@@ -597,8 +624,8 @@
 <div class="ov" id="successSheet">
   <div class="sheet"><div class="s-handle"></div>
     <div style="text-align:center;padding:40px 24px 32px">
-      <div style="font-size:56px;margin-bottom:16px">✅</div>
-      <div style="font-size:22px;font-weight:600;margin-bottom:8px" id="successTitle">Checked Out</div>
+      <div style="font-size:56px;margin-bottom:16px" id="successIcon">✅</div>
+      <div style="font-size:22px;font-weight:600;margin-bottom:8px" id="successTitle">Done</div>
       <div style="font-size:15px;color:var(--text2);line-height:1.5" id="successDetail"></div>
     </div>
     <div style="padding:0 20px 32px"><button class="btn btn-p" onclick="closeSheet('successSheet')">Done</button></div>
@@ -626,13 +653,17 @@ const firebaseConfig = {
   appId:             "1:747403082101:web:7bba1abc57c5020faffb3c"
 };
 
-const app = firebase.initializeApp(firebaseConfig);
-const db  = firebase.database();
+// db initialized after DOM loads to ensure firebase compat scripts are ready
+let db = null;
 
 // ═══════════════════════════════════════
 // DEFAULT DATA
 // ═══════════════════════════════════════
-const DA=[{id:'a0',name:'Skylar Garbett',phone:'(253) 722-3926'}];
+const DA=[
+  {id:'a0',name:'Skylar Garbett',phone:'(253) 722-3926',pin:'1234',tempPin:true},
+  {id:'a1',name:'Khalid Farrah',phone:'',pin:'1234',tempPin:true},
+  {id:'a2',name:'Matthew Gerrish',phone:'',pin:'1234',tempPin:true}
+];
 const DL=[];
 
 // ═══════════════════════════════════════
@@ -643,17 +674,41 @@ let _lockboxes=[...DL];
 let _signs=[];
 let _history=[];
 
-const ga=()=>_agents;
-const gl=()=>_lockboxes;
-const gs=()=>_signs;
-const gh=()=>_history;
-const gu=()=>JSON.parse(localStorage.getItem('prec_user')||'null');
-const su=d=>localStorage.setItem('prec_user',JSON.stringify(d));
+function ga(){return _agents;}
+function gl(){return _lockboxes;}
+function gs(){return _signs;}
+function gh(){return _history;}
+function gu(){return JSON.parse(localStorage.getItem('prec_user')||'null');}
+function su(d){localStorage.setItem('prec_user',JSON.stringify(d));}
 
-async function sa(d){_agents=d;await db.ref('agents').set(d);}
-async function sl(d){_lockboxes=d;await db.ref('lockboxes').set(d);}
-async function ss(d){_signs=d;await db.ref('signs').set(d);}
-async function sh2(d){_history=d;await db.ref('history').set(d);}
+async function sa(d){
+  _agents=d;
+  if(db){
+    const obj={};d.forEach(a=>obj[a.id]=a);
+    await db.ref('agents').set(obj);
+  }
+}
+async function sl(d){
+  _lockboxes=d;
+  if(db){
+    const obj={};d.forEach(b=>obj[b.id]=b);
+    await db.ref('lockboxes').set(obj);
+  }
+}
+async function ss(d){
+  _signs=d;
+  if(db){
+    const obj={};d.forEach(s=>obj[s.id]=s);
+    await db.ref('signs').set(obj);
+  }
+}
+async function sh2(d){
+  _history=d;
+  if(db){
+    const obj={};d.forEach((h,i)=>obj[h.id||'h'+i]=h);
+    await db.ref('history').set(obj);
+  }
+}
 
 function addHist(type,action,detail,agent){
   const h=gh();
@@ -666,32 +721,58 @@ function addHist(type,action,detail,agent){
 // FIREBASE REAL-TIME LISTENERS
 // ═══════════════════════════════════════
 function initFirebase(){
+  try {
+    firebase.initializeApp(firebaseConfig);
+  } catch(e) {
+    // Already initialized
+  }
+  db = firebase.database();
+
   document.body.insertAdjacentHTML('beforeend','<div id="syncBanner" style="position:fixed;top:0;left:0;right:0;z-index:999;background:var(--bg3);color:var(--silver2);font-size:12px;text-align:center;padding:6px;border-bottom:.5px solid var(--border2)">Connecting...</div>');
 
   db.ref('agents').on('value', snap=>{
-    if(snap.exists())_agents=Object.values(snap.val());
-    else db.ref('agents').set(DA);
-    hideSyncBanner();renderAll();
+    const data=parseSnap(snap);
+    if(data){_agents=data;}
+    else{db.ref('agents').set((()=>{const o={};DA.forEach(a=>o[a.id]=a);return o;})());_agents=[...DA];}
+    hideSyncBanner();
+    const setupOpen=document.getElementById('setupScreen').classList.contains('open');
+    if(setupOpen){
+      const sel=document.getElementById('setupAgent');
+      const cur=sel.value;
+      sel.innerHTML='<option value="">Select your name...</option>';
+      const ao=document.createElement('option');ao.value='admin';ao.textContent='Admin';sel.appendChild(ao);
+      _agents.forEach(a=>{const o=document.createElement('option');o.value=a.id;o.textContent=a.name;sel.appendChild(o);});
+      if(cur)sel.value=cur;
+    }
+    renderAll();
   });
   db.ref('lockboxes').on('value', snap=>{
-    if(snap.exists())_lockboxes=Object.values(snap.val());
-    else db.ref('lockboxes').set(DL);
+    const data=parseSnap(snap);
+    _lockboxes=data||[];
     renderAll();
   });
   db.ref('signs').on('value', snap=>{
-    _signs=snap.exists()?Object.values(snap.val()):[];
+    const data=parseSnap(snap);
+    _signs=data||[];
     renderAll();
   });
   db.ref('history').on('value', snap=>{
-    _history=snap.exists()?Object.values(snap.val()):[];
+    const data=parseSnap(snap);
+    _history=data||[];
   });
   db.ref('oh_total').on('value', snap=>{
     if(snap.exists())localStorage.setItem('prec_oh_total',snap.val());
   });
 }
 
+function parseSnap(snap){
+  if(!snap.exists())return null;
+  const val=snap.val();
+  if(Array.isArray(val))return val;
+  return Object.values(val);
+}
+
 function hideSyncBanner(){
-  const b=document.getElementById('syncBanner');
   if(b){b.textContent='Live';b.style.color='var(--green)';setTimeout(()=>b.remove(),1500);}
 }
 
@@ -709,11 +790,11 @@ function setOHTotal(){
 // ═══════════════════════════════════════
 // UTILS
 // ═══════════════════════════════════════
-const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-const tod=()=>new Date().toISOString().split('T')[0];
-const dsi=d=>d?Math.floor((new Date()-new Date(d))/(86400000)):0;
-const fmtD=d=>d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';
-const fmtT=ts=>{const d=new Date(ts),n=new Date(),df=Math.floor((n-d)/1000);if(df<60)return'just now';if(df<3600)return Math.floor(df/60)+'m ago';if(df<86400)return Math.floor(df/3600)+'h ago';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});};
+function ini(n){return n.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();}
+function tod(){return new Date().toISOString().split('T')[0];}
+function dsi(d){return d?Math.floor((new Date()-new Date(d))/(86400000)):0;}
+function fmtD(d){return d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'—';}
+function fmtT(ts){const d=new Date(ts),n=new Date(),df=Math.floor((n-d)/1000);if(df<60)return'just now';if(df<3600)return Math.floor(df/60)+'m ago';if(df<86400)return Math.floor(df/3600)+'h ago';return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 function uid(){return's'+Math.random().toString(36).slice(2,9);}
 
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800);}
@@ -736,17 +817,24 @@ function navTo(pageId,btn){
 const ADMIN_ACCOUNT = { id: 'admin', name: 'Admin' };
 const ADMIN_ACCOUNT_PIN = '3699';
 
+let _pendingAgent = null;
+
 function handleSetupChange(){
-  const sel = document.getElementById('setupAgent');
-  const pinField = document.getElementById('pinField');
-  const pinInput = document.getElementById('setupPin');
-  if(sel.value === 'admin'){
-    pinField.style.display = 'block';
-    pinInput.value = '';
-    pinInput.focus();
+  const sel=document.getElementById('setupAgent');
+  const pinField=document.getElementById('pinField');
+  const pinInput=document.getElementById('setupPin');
+  const pinLabel=document.getElementById('pinFieldLabel');
+  if(sel.value==='admin'){
+    pinLabel.textContent='Admin PIN';
+    pinField.style.display='block';
+    pinInput.value='';
+  } else if(sel.value){
+    pinLabel.textContent='PIN';
+    pinField.style.display='block';
+    pinInput.value='';
   } else {
-    pinField.style.display = 'none';
-    pinInput.value = '';
+    pinField.style.display='none';
+    pinInput.value='';
   }
 }
 
@@ -780,27 +868,94 @@ function completeSetup(){
   errEl.style.display='none';
   if(!id){errEl.textContent='Please select your name';errEl.style.display='block';return;}
 
-  // Admin account — verify PIN
+  // Admin account
   if(id==='admin'){
     const pin=document.getElementById('setupPin').value;
     if(pin!==ADMIN_ACCOUNT_PIN){errEl.textContent='Incorrect PIN';errEl.style.display='block';return;}
-    // Sign in as the hardcoded admin agent (Skylar Garbett)
-    const agents=ga();
-    const adminAgent=agents.find(a=>HARDCODED_ADMINS.includes(a.name))||{id:'admin',name:'Skylar Garbett',phone:'(253) 722-3926'};
-    su(adminAgent);
+    su({id:'admin',name:'Admin',phone:''});
     document.getElementById('setupScreen').classList.remove('open');
     updateHeader();updateAdminUI();renderAll();
     return;
   }
 
-  // Regular agent
-  const agents=ga(),agent=agents.find(a=>a.id===id);
+  // Regular agent — verify PIN
+  const agentPool=_agents.length?_agents:DA;
+  const agent=agentPool.find(a=>a.id===id);
   if(!agent){errEl.textContent='Agent not found. Contact your admin.';errEl.style.display='block';return;}
+  if(!agent.pin){errEl.textContent='No PIN set. Contact your admin.';errEl.style.display='block';return;}
+  const enteredPin=document.getElementById('setupPin').value;
+  if(enteredPin!==agent.pin){errEl.textContent='Incorrect PIN';errEl.style.display='block';return;}
+
+  // Correct PIN — check if temp
+  if(agent.tempPin){
+    _pendingAgent=agent;
+    document.getElementById('setupScreen').classList.remove('open');
+    document.getElementById('newPin').value='';
+    document.getElementById('confirmPin').value='';
+    document.getElementById('createPinError').style.display='none';
+    document.getElementById('createPinScreen').classList.add('open');
+    return;
+  }
+
   su(agent);
   document.getElementById('setupScreen').classList.remove('open');
   updateHeader();updateAdminUI();renderAll();
 }
+
+function submitCreatePin(){
+  const newPin=document.getElementById('newPin').value.trim();
+  const confirmPinVal=document.getElementById('confirmPin').value.trim();
+  const errEl=document.getElementById('createPinError');
+  errEl.style.display='none';
+  if(!newPin||newPin.length!==4||isNaN(newPin)){errEl.textContent='PIN must be 4 digits';errEl.style.display='block';return;}
+  if(newPin!==confirmPinVal){errEl.textContent='PINs do not match';errEl.style.display='block';return;}
+  const agents=ga();
+  const idx=agents.findIndex(a=>a.id===_pendingAgent.id);
+  if(idx===-1){errEl.textContent='Agent not found';errEl.style.display='block';return;}
+  agents[idx].pin=newPin;agents[idx].tempPin=false;
+  sa(agents);
+  const updatedAgent={..._pendingAgent,pin:newPin,tempPin:false};
+  _pendingAgent=null;
+  su(updatedAgent);
+  document.getElementById('createPinScreen').classList.remove('open');
+  showToast('PIN created successfully');
+  updateHeader();updateAdminUI();renderAll();
+}
+
+function resetAgentPin(id){
+  const existing=document.getElementById('confirmSheet');if(existing)existing.remove();
+  const el=document.createElement('div');el.id='confirmSheet';el.className='ov open';
+  el.innerHTML=`<div class="sheet"><div class="s-handle"></div>
+    <div style="padding:24px 24px 8px">
+      <div style="font-size:17px;font-weight:600;margin-bottom:8px">Reset PIN</div>
+      <div style="font-size:14px;color:var(--text2);margin-bottom:16px">Enter a new temporary PIN. The agent will create their own on next sign in.</div>
+      <div class="field"><label>New Temporary PIN</label><input type="password" id="resetPinInput" placeholder="1234" maxlength="4" inputmode="numeric"></div>
+    </div>
+    <div style="padding:0 20px 28px;display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-p" id="confirmYes">Set PIN</button>
+      <button class="btn btn-o" id="confirmNo">Cancel</button>
+    </div></div>`;
+  document.body.appendChild(el);
+  document.getElementById('confirmYes').onclick=()=>{
+    const pin=document.getElementById('resetPinInput').value.trim();
+    if(!pin||pin.length!==4||isNaN(pin)){showToast('Enter a 4-digit PIN');return;}
+    const agents=ga();
+    const idx=agents.findIndex(a=>a.id===id);if(idx===-1)return;
+    agents[idx].pin=pin;agents[idx].tempPin=true;
+    sa(agents);el.remove();showToast('PIN reset');renderAdminPanel();
+  };
+  document.getElementById('confirmNo').onclick=()=>el.remove();
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+}
+function goToMyCheckouts(){
+  navTo('pageHome', document.querySelectorAll('.ni')[0]);
+  setTimeout(()=>{
+    const el=document.getElementById('myCheckoutsList');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  },100);
+}
 function switchUser(){closeSheet('userSheet');su(null);showSetup();}
+
 function updateHeader(){
   const user=gu();
   const av=document.getElementById('headerAvatar');
@@ -828,6 +983,27 @@ function sgIcon(){
 let lbFilter='all';
 function filterLB(f,el){lbFilter=f;document.querySelectorAll('.ftb').forEach(t=>t.classList.remove('active'));el.classList.add('active');renderLockboxes();}
 
+function renderMyLockboxes(){
+  const user=gu();
+  const el=document.getElementById('myLockboxList');
+  if(!el)return;
+  const mine=gl().filter(b=>b.agent===user?.name&&b.status==='checkedout');
+  if(!mine.length){
+    el.innerHTML='<div class="empty" style="padding:16px 20px"><div class="empty-text">You have no lockboxes checked out</div></div>';
+    return;
+  }
+  const card=document.createElement('div');card.className='card';card.style.margin='0 16px 10px';
+  card.innerHTML=mine.map(b=>{
+    const days=dsi(b.dateCheckedOut);
+    return`<div class="cr" onclick="showLockboxDetail('${b.id}')">
+      ${lbIcon('checkedout')}
+      <div class="ci"><div class="ct">${b.number}</div><div class="cs">${b.address||'No address'}</div></div>
+      <div class="crt"><span class="badge${days>=10?' over':days>6?' warn':''}">${days}d</span></div>
+    </div>`;
+  }).join('');
+  el.innerHTML='';el.appendChild(card);
+}
+
 function renderLockboxes(){
   const list=document.getElementById('lockboxList');
   let boxes=gl();
@@ -843,7 +1019,9 @@ function renderLockboxes(){
     return`<div class="cr" onclick="showLockboxDetail('${b.id}')">${lbIcon(b.status)}<div class="ci"><div class="ct">${b.number}</div><div class="cs">${b.agent||'Available'}</div>${b.address?`<div class="cm">${b.address}</div>`:''}</div><div class="crt">${pill}${badge}</div></div>`;
   }).join('');
   list.innerHTML='';list.appendChild(card);
-  const ab=document.createElement('div');ab.style.cssText='padding:0 16px 16px';
+  const ab=document.createElement('div');
+  ab.id='addLockboxBtn';
+  ab.style.cssText='padding:0 16px 16px;display:none';
   ab.innerHTML='<button class="btn btn-o" onclick="showAddLockboxSheet()">+ Add Lockbox</button>';
   list.appendChild(ab);
 }
@@ -859,9 +1037,14 @@ function showLockboxDetail(id){
     <div class="ir"><div class="il">For Sale Sign</div><div class="iv">${b.forSaleSign?'✅ Yes':'No'}</div></div>
     ${b.dateCheckedOut?`<div class="ir"><div class="il">Days Out</div><div class="iv">${dsi(b.dateCheckedOut)} days</div></div>`:''}
   `;
+  const user=gu();
+  const isOwner=b.agent&&user&&b.agent===user.name;
+  const canReturn=isOwner||adminUnlocked;
   document.getElementById('ldActions').innerHTML=b.status==='available'
     ?`<button class="btn btn-p" onclick="closeSheet('lockboxDetailSheet');showCheckoutLockboxSheet('${id}')">Check Out This Lockbox</button>`
-    :`<button class="btn btn-d" onclick="returnLockbox('${id}')">Return Lockbox</button>`;
+    :canReturn
+      ?`<button class="btn btn-d" onclick="returnLockbox('${id}')">Return Lockbox</button>`
+      :`<div style="text-align:center;padding:8px;font-size:13px;color:var(--silver2)">Only ${b.agent} can return this lockbox</div>`;
   openSheet('lockboxDetailSheet');
 }
 
@@ -901,7 +1084,9 @@ function returnLockbox(id){
   const num=boxes[idx].number,agent=boxes[idx].agent;
   addHist('lockbox','return',`${num} returned`,agent);
   boxes[idx]={...boxes[idx],status:'available',agent:null,address:null,dateCheckedOut:null,forSaleSign:false};
-  sl(boxes);closeSheet('lockboxDetailSheet');showToast(`🔓 ${num} returned`);renderAll();
+  sl(boxes);closeSheet('lockboxDetailSheet');
+  showSuccess('Lockbox Returned',`${num} has been returned and is now available.`,'🔓');
+  renderAll();
 }
 
 function showAddLockboxSheet(){document.getElementById('alNumber').value='';openSheet('addLockboxSheet');}
@@ -910,7 +1095,8 @@ function submitAddLockbox(){
   if(!num){showToast('Please enter a lockbox number');return;}
   const boxes=gl();if(boxes.find(b=>b.number===num)){showToast('Lockbox already exists');return;}
   boxes.push({id:uid(),number:num,agent:null,address:null,dateCheckedOut:null,forSaleSign:false,status:'available'});
-  sl(boxes);closeSheet('addLockboxSheet');showToast(`✅ ${num} added`);renderAll();
+  sl(boxes);closeSheet('addLockboxSheet');showToast(`✅ ${num} added`);
+  renderAll();renderAdminPanel();
 }
 
 // SIGNS
@@ -942,7 +1128,7 @@ function signRow(s,overdue){
   const days=dsi(s.dateCheckedOut);
   const pill=overdue?'<span class="pill p-over">Overdue</span>':'<span class="pill p-out">Out</span>';
   const badge=`<span class="badge${overdue?' over':days>6?' warn':''}">${days}d</span>`;
-  return`<div class="cr" onclick="showSignDetail('${s.id}')">${sgIcon()}<div class="ci"><div class="ct">${s.agent}</div><div class="cs">${s.quantity} sign${s.quantity!==1?'s':''} checked out</div><div class="cm">Since ${fmtD(s.dateCheckedOut)}</div></div><div class="crt">${pill}${badge}</div></div>`;
+  return`<div class="cr" onclick="showSignDetail('${s.id}')">${sgIcon()}<div class="ci"><div class="ct">${s.agent}</div><div class="cs">${s.quantity} sign${s.quantity!==1?'s':''} checked out${s.other?' · '+s.other:''}</div><div class="cm">Since ${fmtD(s.dateCheckedOut)}</div></div><div class="crt">${pill}${badge}</div></div>`;
 }
 
 function showSignDetail(id){
@@ -951,15 +1137,53 @@ function showSignDetail(id){
   document.getElementById('sdInfo').innerHTML=`
     <div class="ir"><div class="il">Agent</div><div class="iv">${s.agent}</div></div>
     <div class="ir"><div class="il">Quantity</div><div class="iv">${s.quantity} sign${s.quantity!==1?'s':''}</div></div>
+    ${s.other?`<div class="ir"><div class="il">Other</div><div class="iv">${s.other}</div></div>`:''}
     <div class="ir"><div class="il">Date Out</div><div class="iv">${fmtD(s.dateCheckedOut)}</div></div>
     <div class="ir"><div class="il">Days Out</div><div class="iv">${days} day${days!==1?'s':''}${days>=10?' ⚠️ Overdue':''}</div></div>
   `;
-  document.getElementById('sdActions').innerHTML=s.status==='checkedout'?`<button class="btn btn-d" onclick="returnSigns('${id}')">Return ${s.quantity} Sign${s.quantity!==1?'s':''}</button>`:'';
-  openSheet('signsDetailSheet');
+  const user=gu();
+  const isOwner=s.agent&&user&&s.agent===user.name;
+  const canReturn=isOwner||adminUnlocked;
+  document.getElementById('sdActions').innerHTML=s.status==='checkedout'
+    ?(canReturn
+      ?`<button class="btn btn-d" onclick="returnSigns('${id}')">Return ${s.quantity} Sign${s.quantity!==1?'s':''}</button>`
+      :`<div style="text-align:center;padding:8px;font-size:13px;color:var(--silver2)">Only ${s.agent} can return these signs</div>`)
+    :'';
 }
 
 function showCheckoutSignsSheet(){
   const agents=ga(),user=gu();
+
+  // Check if current user already has signs checked out
+  const agentName=user?user.name:'';
+  const activeSignCheckouts=gs().filter(s=>s.agent===agentName&&s.status==='checkedout');
+  const totalOut=activeSignCheckouts.reduce((sum,s)=>sum+s.quantity,0);
+
+  if(activeSignCheckouts.length&&!adminUnlocked){
+    // Show warning first
+    const existing=document.getElementById('confirmSheet');if(existing)existing.remove();
+    const el=document.createElement('div');el.id='confirmSheet';el.className='ov open';
+    el.innerHTML=`<div class="sheet"><div class="s-handle"></div>
+      <div style="padding:24px 24px 8px;text-align:center">
+        <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+        <div style="font-size:17px;font-weight:600;margin-bottom:8px">You already have signs out</div>
+        <div style="font-size:14px;color:var(--text2);line-height:1.6">You currently have <strong style="color:var(--text)">${totalOut} open house sign${totalOut!==1?'s':''}</strong> checked out across ${activeSignCheckouts.length} checkout${activeSignCheckouts.length!==1?'s':''}. Are you sure you want to check out more?</div>
+      </div>
+      <div style="padding:16px 20px 28px;display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-p" id="confirmYes">Yes, Check Out More</button>
+        <button class="btn btn-o" id="confirmNo">Cancel</button>
+      </div></div>`;
+    document.body.appendChild(el);
+    document.getElementById('confirmYes').onclick=()=>{el.remove();_openCheckoutSignsSheet(agents,user);};
+    document.getElementById('confirmNo').onclick=()=>el.remove();
+    el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+    return;
+  }
+
+  _openCheckoutSignsSheet(agents,user);
+}
+
+function _openCheckoutSignsSheet(agents,user){
   const agSel=document.getElementById('csAgent');
   if(adminUnlocked){
     agSel.innerHTML=agents.map(a=>`<option value="${a.name}" ${user&&user.name===a.name?'selected':''}>${a.name}</option>`).join('');
@@ -968,15 +1192,22 @@ function showCheckoutSignsSheet(){
     agSel.innerHTML=`<option value="${user.name}">${user.name}</option>`;
     agSel.disabled=true;
   }
-  document.getElementById('csQuantity').value='';openSheet('checkoutSignsSheet');
+  document.getElementById('csQuantity').value='';
+  document.getElementById('csOther').value='';
+  openSheet('checkoutSignsSheet');
 }
 function submitCheckoutSigns(){
-  const agent=document.getElementById('csAgent').value,qty=parseInt(document.getElementById('csQuantity').value);
+  const agent=document.getElementById('csAgent').value;
+  const qty=parseInt(document.getElementById('csQuantity').value);
+  const other=document.getElementById('csOther').value.trim();
   if(!qty||qty<1){showToast('Please enter a valid quantity');return;}
-  const signs=gs();signs.push({id:uid(),agent,quantity:qty,dateCheckedOut:tod(),dateReturned:null,status:'checkedout'});
-  ss(signs);addHist('signs','checkout',`${qty} sign${qty!==1?'s':''} taken`,agent);
+  const signs=gs();
+  signs.push({id:uid(),agent,quantity:qty,other:other||null,dateCheckedOut:tod(),dateReturned:null,status:'checkedout'});
+  ss(signs);
+  const detail=other?`${qty} sign${qty!==1?'s':''} + ${other}`:(`${qty} sign${qty!==1?'s':''}`);
+  addHist('signs','checkout',`${detail} taken`,agent);
   closeSheet('checkoutSignsSheet');
-  showSuccess('Signs Checked Out',`${qty} open house sign${qty!==1?'s':''} checked out to ${agent}.`);
+  showSuccess('Signs Checked Out',`${qty} open house sign${qty!==1?'s':''} checked out to ${agent}${other?' · '+other:''}.`);
   renderAll();
 }
 function returnSigns(id){
@@ -984,7 +1215,9 @@ function returnSigns(id){
   const qty=signs[idx].quantity,agent=signs[idx].agent;
   addHist('signs','return',`${qty} sign${qty!==1?'s':''} returned`,agent);
   signs[idx].status='returned';signs[idx].dateReturned=tod();
-  ss(signs);closeSheet('signsDetailSheet');showToast(`✅ ${qty} sign${qty!==1?'s':''} returned`);renderAll();
+  ss(signs);closeSheet('signsDetailSheet');
+  showSuccess('Signs Returned',`${qty} open house sign${qty!==1?'s':''} have been returned successfully.`,'🏠');
+  renderAll();
 }
 
 // AGENTS
@@ -1016,12 +1249,23 @@ function showAgentProfile(id){
   openSheet('agentProfileSheet');
 }
 
-function showAddAgentSheet(){document.getElementById('aaName').value='';document.getElementById('aaPhone').value='';openSheet('addAgentSheet');}
+function showAddAgentSheet(){
+  document.getElementById('aaName').value='';
+  document.getElementById('aaPhone').value='';
+  document.getElementById('aaPin').value='';
+  openSheet('addAgentSheet');
+}
 function submitAddAgent(){
-  const name=document.getElementById('aaName').value.trim(),phone=document.getElementById('aaPhone').value.trim();
+  const name=document.getElementById('aaName').value.trim();
+  const phone=document.getElementById('aaPhone').value.trim();
+  const pin=document.getElementById('aaPin').value.trim();
   if(!name){showToast('Please enter a name');return;}
-  const agents=ga();agents.push({id:uid(),name,phone});sa(agents);
-  closeSheet('addAgentSheet');showToast(`✅ ${name} added`);renderAll();
+  if(!pin||pin.length!==4||isNaN(pin)){showToast('Please enter a 4-digit PIN');return;}
+  const agents=ga();
+  agents.push({id:uid(),name,phone,pin,tempPin:true});
+  sa(agents);
+  closeSheet('addAgentSheet');showToast(`✅ ${name} added`);
+  renderAll();renderAdminPanel();
 }
 
 function renderHome(){
@@ -1049,9 +1293,9 @@ function renderHome(){
       <div style="font-size:10px;color:var(--text3);margin-top:2px">${lbOut} out</div>
     </div>
     <div style="padding:14px 12px;text-align:center;border-right:.5px solid var(--border2)">
-      <div style="font-size:22px;font-weight:600;color:${fsOut>0?'var(--amber)':'var(--green)'}">${fsOut}</div>
-      <div style="font-size:10px;color:var(--silver2);margin-top:3px;line-height:1.3">For Sale<br>Signs Out</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:2px">${allBoxes.length-fsOut} avail</div>
+      <div style="font-size:22px;font-weight:600;color:${fsOut>0?'var(--amber)':'var(--green)'}">${allBoxes.length-fsOut}</div>
+      <div style="font-size:10px;color:var(--silver2);margin-top:3px;line-height:1.3">For Sale<br>Signs Avail</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px">${fsOut} out</div>
     </div>
     <div style="padding:14px 12px;text-align:center">
       <div style="font-size:22px;font-weight:600;color:${ohAvail<10?'var(--red)':ohAvail<20?'var(--amber)':'var(--green)'}">${ohAvail}</div>
@@ -1072,48 +1316,15 @@ function showHistorySheet(filter){
   else{listEl.innerHTML=hist.map(h=>`<div class="hi"><div class="h-dot ${h.action==='checkout'?'co':'re'}"></div><div class="h-info"><div class="h-title">${h.detail}</div><div class="h-sub">${h.agent} · ${h.action==='checkout'?'Checked out':'Returned'}</div></div><div class="h-time">${fmtT(h.timestamp)}</div></div>`).join('');}
   openSheet('historySheet');
 }
-function clearHistory(){if(!confirm('Clear all activity history?'))return;sh2([]);showToast('History cleared');}
-
-// ═══════════════════════════════════════
-// ADMIN SYSTEM
-// ═══════════════════════════════════════
-const ADMIN_PIN='2025'; // fallback PIN for first-time setup
-let adminUnlocked=false;
-let adminPinCallback=null;
-
-function getAdmins(){return JSON.parse(localStorage.getItem('prec_admins')||'[]');}
-function saveAdmins(d){localStorage.setItem('prec_admins',JSON.stringify(d));}
-
-function isAdmin(name){
-  const admins=getAdmins();
-  // If no admins set yet, anyone can be admin (first-time setup)
-  if(!admins.length)return true;
-  return admins.includes(name);
+function clearHistory(){
+  showConfirm('Clear all activity history?',()=>{sh2([]);showToast('History cleared');});
 }
 
-function updateAdminUI(){
-  const user=gu();
-  const admin=user&&isAdmin(user.name);
-  adminUnlocked=admin;
-  const clr=document.getElementById('clearHistoryRow');
-  const mgmt=document.getElementById('adminMgmtRow');
-  if(clr)clr.style.display=admin?'flex':'none';
-  if(mgmt)mgmt.style.display=admin?'flex':'none';
-}
-
-function requireAdmin(callback){
-  const user=gu();
-  if(user&&isAdmin(user.name)){callback();return;}
-  // Not an admin — ask for PIN as fallback
-  adminPinCallback=callback;
-  document.getElementById('adminPinInput').value='';
-  openSheet('adminPinSheet');
-}
 
 // ═══════════════════════════════════════
 // ADMIN SYSTEM — hardcoded admins
 // ═══════════════════════════════════════
-const HARDCODED_ADMINS = ['Skylar Garbett']; // Add names here to grant permanent admin access
+const HARDCODED_ADMINS = ['Admin'];
 const ADMIN_PIN = '2025'; // fallback PIN for future admins not yet in the list
 let adminUnlocked = false;
 let adminPinCallback = null;
@@ -1128,9 +1339,20 @@ function updateAdminUI(){
   const user=gu();
   const admin=user&&isAdmin(user.name);
   adminUnlocked=admin;
-  // Show/hide admin nav tab
+  // Admin nav tab
   const adminTab=document.getElementById('adminNavBtn');
   if(adminTab)adminTab.style.display=admin?'flex':'none';
+  // Team page add button
+  const addAgentBtn=document.getElementById('addAgentBtn');
+  if(addAgentBtn)addAgentBtn.style.display=admin?'block':'none';
+  // Lockbox list add button
+  const addLockboxBtn=document.getElementById('addLockboxBtn');
+  if(addLockboxBtn)addLockboxBtn.style.display=admin?'block':'none';
+  // Settings admin rows
+  const clr=document.getElementById('clearHistoryRow');
+  const mgmt=document.getElementById('adminMgmtRow');
+  if(clr)clr.style.display=admin?'flex':'none';
+  if(mgmt)mgmt.style.display=admin?'flex':'none';
 }
 
 function requireAdmin(callback){
@@ -1160,6 +1382,61 @@ function submitAdminPin(){
 function renderAdminPanel(){
   renderAdminAgents();
   renderAdminLockboxes();
+  // Update OH signs subtitle
+  const ohTotal=parseInt(localStorage.getItem('prec_oh_total')||'60');
+  const ohOut=gs().filter(s=>s.status==='checkedout').reduce((sum,s)=>sum+s.quantity,0);
+  const sub=document.getElementById('ohSignsAdminSub');
+  if(sub)sub.textContent=`${ohTotal} total · ${ohTotal-ohOut} available · ${ohOut} out`;
+}
+
+function showOHSignsAdmin(){
+  const ohTotal=parseInt(localStorage.getItem('prec_oh_total')||'60');
+  const ohOut=gs().filter(s=>s.status==='checkedout').reduce((sum,s)=>sum+s.quantity,0);
+  const existing=document.getElementById('confirmSheet');if(existing)existing.remove();
+  const el=document.createElement('div');el.id='confirmSheet';el.className='ov open';
+  el.innerHTML=`<div class="sheet"><div class="s-handle"></div>
+    <div class="s-hdr"><div style="font-size:17px;font-weight:600">Open House Sign Inventory</div><button class="s-close" onclick="document.getElementById('confirmSheet').remove()">✕</button></div>
+    <div style="padding:16px 20px">
+      <div class="card" style="margin:0 0 16px">
+        <div class="cr"><div class="ci"><div class="ct">Total Signs</div></div><div class="ct">${ohTotal}</div></div>
+        <div class="cr"><div class="ci"><div class="ct">Available</div></div><div class="ct" style="color:var(--green)">${ohTotal-ohOut}</div></div>
+        <div class="cr" style="border-bottom:none"><div class="ci"><div class="ct">Currently Out</div></div><div class="ct">${ohOut}</div></div>
+      </div>
+      <div class="field"><label>Adjust Total Inventory</label>
+        <input type="number" id="ohTotalInput" value="${ohTotal}" min="0" style="background:var(--bg3);border:.5px solid var(--border);border-radius:var(--radius-sm);padding:13px 14px;font-size:15px;color:var(--text);width:100%;appearance:none;outline:none">
+        <div style="font-size:11px;color:var(--silver2);margin-top:5px">Set the total number of open house signs your team owns</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-o" style="flex:1" onclick="adjustOHSigns(-1)">− Remove 1</button>
+        <button class="btn btn-o" style="flex:1" onclick="adjustOHSigns(1)">+ Add 1</button>
+      </div>
+    </div>
+    <div style="padding:0 20px 28px;display:flex;flex-direction:column;gap:8px;margin-top:4px">
+      <button class="btn btn-p" onclick="saveOHTotal()">Save Total</button>
+      <button class="btn btn-o" onclick="document.getElementById('confirmSheet').remove()">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+}
+
+function adjustOHSigns(delta){
+  const input=document.getElementById('ohTotalInput');
+  if(!input)return;
+  const current=parseInt(input.value)||0;
+  input.value=Math.max(0,current+delta);
+}
+
+function saveOHTotal(){
+  const input=document.getElementById('ohTotalInput');
+  if(!input)return;
+  const val=parseInt(input.value);
+  if(isNaN(val)||val<0){showToast('Invalid number');return;}
+  localStorage.setItem('prec_oh_total',val);
+  if(db)db.ref('oh_total').set(val);
+  document.getElementById('confirmSheet').remove();
+  showToast(`✅ Sign total updated to ${val}`);
+  renderAdminPanel();
 }
 
 function renderAdminAgents(){
@@ -1173,7 +1450,8 @@ function renderAdminAgents(){
       <div class="avatar" style="width:38px;height:38px;font-size:12px;flex-shrink:0;border-radius:50%;background:var(--bg4);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--silver)">${ini(a.name)}</div>
       <div class="ci"><div class="ct">${a.name}</div><div class="cs">${a.phone||'No phone'}</div></div>
       ${HARDCODED_ADMINS.includes(a.name)?'<span class="pill p-avail" style="font-size:9px">Admin</span>':''}
-      <button onclick="deleteAgent('${a.id}')" style="margin-left:8px;background:rgba(255,69,58,.15);border:1px solid rgba(255,69,58,.2);color:var(--red);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">Delete</button>
+      <button onclick="resetAgentPin('${a.id}')" style="margin-left:4px;background:var(--bg4);border:1px solid var(--border);color:var(--silver2);border-radius:8px;padding:5px 8px;font-size:11px;font-weight:600;cursor:pointer">Reset PIN</button>
+      <button onclick="deleteAgent('${a.id}')" style="margin-left:4px;background:rgba(255,69,58,.15);border:1px solid rgba(255,69,58,.2);color:var(--red);border-radius:8px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer">Delete</button>
     </div>
   `).join('');
   el.innerHTML='';el.appendChild(card);
@@ -1199,26 +1477,97 @@ function renderAdminLockboxes(){
 }
 
 function deleteAgent(id){
-  if(!confirm('Delete this agent? This cannot be undone.'))return;
-  const agents=ga().filter(a=>a.id!==id);
-  sa(agents);showToast('Agent deleted');renderAdminPanel();
+  const agents=ga();
+  const agent=agents.find(a=>a.id===id);
+  if(!agent)return;
+
+  const activeLockboxes=gl().filter(b=>b.agent===agent.name&&b.status==='checkedout');
+  const activeSigns=gs().filter(s=>s.agent===agent.name&&s.status==='checkedout');
+  const hasActive=activeLockboxes.length||activeSigns.length;
+
+  if(hasActive){
+    let items=[];
+    if(activeLockboxes.length)items.push(`${activeLockboxes.length} lockbox${activeLockboxes.length!==1?'es':''} (${activeLockboxes.map(b=>b.number).join(', ')})`);
+    if(activeSigns.length){const total=activeSigns.reduce((sum,s)=>sum+s.quantity,0);items.push(`${total} open house sign${total!==1?'s':''}`);}
+    const existing=document.getElementById('confirmSheet');if(existing)existing.remove();
+    const el=document.createElement('div');el.id='confirmSheet';el.className='ov open';
+    el.innerHTML=`<div class="sheet"><div class="s-handle"></div>
+      <div style="padding:24px 24px 8px;text-align:center">
+        <div style="font-size:32px;margin-bottom:12px">⚠️</div>
+        <div style="font-size:17px;font-weight:600;margin-bottom:8px">${agent.name} has active checkouts</div>
+        <div style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:4px">${items.join(' and ')} will be returned automatically.</div>
+      </div>
+      <div style="padding:16px 20px 28px;display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-d" id="confirmYes">Delete & Return All Items</button>
+        <button class="btn btn-o" id="confirmNo">Cancel</button>
+      </div></div>`;
+    document.body.appendChild(el);
+    document.getElementById('confirmYes').onclick=()=>{
+      el.remove();
+      const boxes=gl().map(b=>b.agent===agent.name&&b.status==='checkedout'?{...b,status:'available',agent:null,address:null,dateCheckedOut:null,forSaleSign:false}:b);
+      sl(boxes);
+      const signs=gs().map(s=>s.agent===agent.name&&s.status==='checkedout'?{...s,status:'returned',dateReturned:tod()}:s);
+      ss(signs);
+      sa(ga().filter(a=>a.id!==id));
+      showToast(`${agent.name} deleted, items returned`);
+      renderAll();renderAdminPanel();
+    };
+    document.getElementById('confirmNo').onclick=()=>el.remove();
+    el.addEventListener('click',e=>{if(e.target===el)el.remove();});
+  } else {
+    showConfirm(`Delete ${agent.name}?`,()=>{
+      sa(ga().filter(a=>a.id!==id));
+      showToast(`${agent.name} deleted`);
+      renderAll();renderAdminPanel();
+    });
+  }
 }
 
 function deleteLockbox(id){
-  if(!confirm('Delete this lockbox? This cannot be undone.'))return;
-  const boxes=gl().filter(b=>b.id!==id);
-  sl(boxes);showToast('Lockbox deleted');renderAdminPanel();
+  const boxes=gl();
+  const box=boxes.find(b=>b.id===id);
+  if(!box)return;
+  showConfirm(`Delete ${box.number}?`, ()=>{
+    const updated=gl().filter(b=>b.id!==id);
+    sl(updated);
+    showToast(`${box.number} deleted`);
+    renderAdminPanel();
+  });
+}
+
+function showConfirm(message, onConfirm){
+  // Remove any existing confirm sheet
+  const existing=document.getElementById('confirmSheet');
+  if(existing)existing.remove();
+  const el=document.createElement('div');
+  el.id='confirmSheet';
+  el.className='ov open';
+  el.innerHTML=`<div class="sheet"><div class="s-handle"></div>
+    <div style="padding:28px 24px 8px;text-align:center">
+      <div style="font-size:18px;font-weight:600;margin-bottom:8px">Confirm</div>
+      <div style="font-size:14px;color:var(--text2)">${message}</div>
+    </div>
+    <div style="padding:16px 20px 28px;display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-d" id="confirmYes">Yes, Delete</button>
+      <button class="btn btn-o" id="confirmNo">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(el);
+  document.getElementById('confirmYes').onclick=()=>{el.remove();onConfirm();};
+  document.getElementById('confirmNo').onclick=()=>el.remove();
+  el.addEventListener('click',e=>{if(e.target===el)el.remove();});
 }
 
 function clearAllData(){
-  if(!confirm('⚠️ This will delete ALL lockboxes, signs, agents, and history. Are you sure?'))return;
-  if(!confirm('Last chance — this cannot be undone. Confirm?'))return;
-  sa(DA);sl([]);ss([]);sh2([]);
-  showToast('All data cleared');renderAll();renderAdminPanel();
+  showConfirm('Clear ALL data? This cannot be undone.', ()=>{
+    sa(DA);sl([]);ss([]);sh2([]);
+    showToast('All data cleared');renderAll();renderAdminPanel();
+  });
 }
 
 // SUCCESS SCREEN
-function showSuccess(title, detail){
+function showSuccess(title, detail, icon){
+  document.getElementById('successIcon').textContent=icon||'✅';
   document.getElementById('successTitle').textContent=title;
   document.getElementById('successDetail').textContent=detail;
   openSheet('successSheet');
@@ -1302,7 +1651,7 @@ function showInventorySheet(){
 }
 
 
-function renderAll(){renderHome();renderLockboxes();renderSigns();renderAgents();updateHeader();}
+function renderAll(){renderHome();renderMyLockboxes();renderLockboxes();renderSigns();renderAgents();updateHeader();}
 
 window.addEventListener('load',()=>{
   try {
